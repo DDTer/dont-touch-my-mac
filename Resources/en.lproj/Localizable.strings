@@ -25,7 +25,7 @@
 "guard.retract" = "Pull your hand back to dismiss";
 "guard.escapeClose" = "Esc to close";
 "guard.escapePause" = "Esc to pause guard";
-"guard.shortcuts" = "Esc dismisses the warning\nMenu bar controls stay available";
+"guard.shortcuts" = "Esc dismisses the warning\n⌥⌘G toggles guard anytime";
 "image.caption" = "Full-screen warning";
 "image.change" = "Change image";
 "image.reset" = "Reset";

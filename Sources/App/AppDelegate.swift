@@ -31,10 +31,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Don’t Touch My Mac!", action: nil, keyEquivalent: "")
         menu.addItem(.separator())
         add(menu, "menu.open", #selector(openMain), "")
-        toggleItem = add(menu, "guard.enable", #selector(toggle), "")
+        toggleItem = add(menu, "guard.enable", #selector(toggle), "g")
+        toggleItem.keyEquivalentModifierMask = [.command, .option]
         add(menu, "guard.preview", #selector(preview), "")
         menu.addItem(.separator())
         add(menu, "menu.quit", #selector(quit), "q")
+
+        HotKeyManager.shared.onTrigger = { [weak self] in
+            MainActor.assumeIsolated {
+                self?.model.toggle()
+            }
+        }
+        HotKeyManager.shared.register()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "hand.raised.slash", accessibilityDescription: "Don't Touch My Mac")

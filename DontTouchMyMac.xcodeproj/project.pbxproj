@@ -15,6 +15,7 @@
 		2B08DE034BB329DB8799AFE7 /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B67F5F57C99CACE27DC3A22D /* MainScreen.swift */; };
 		3166F71AB1F1DFA904315025 /* Poster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FD5CB4ED8ECC5CC9940B1BB /* Poster.swift */; };
 		36AA1A95BC840702EDD10148 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E0D8CE9550BE7BAFCAE11008 /* AVFoundation.framework */; };
+		38B8EEEB5B759D4CC13F62D2 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BDAD4EB939CDE5FB59D1494 /* HotKeyManager.swift */; };
 		44D3D551288C64D6EE6DE656 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 456DA54A62AE4FD0BDAD6803 /* Localizable.strings */; };
 		5AF51EC20F58E4B5F4B9AC8D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B9A10A65403FCB98C43761 /* AppDelegate.swift */; };
 		6DFB44916AC494328C8239B9 /* WarningScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47DE984D1D190C99F1495A0E /* WarningScreen.swift */; };
@@ -51,6 +52,7 @@
 		810C7237AE60B477BCE5D8D0 /* en.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = en.jpg; sourceTree = "<group>"; };
 		842B7F5D46B1739FB81F8ED3 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		8A27EB3D63BF46638663D17D /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		8BDAD4EB939CDE5FB59D1494 /* HotKeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyManager.swift; sourceTree = "<group>"; };
 		8F3B4645EAEC1FDEEC849510 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		91147DF0E091B4B1FD0D2589 /* WarningWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarningWindow.swift; sourceTree = "<group>"; };
 		96E77070EB84256C4ADCC031 /* generate_voices.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = generate_voices.py; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 		856AF873FEE2CAA5F5ABF9D9 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				8BDAD4EB939CDE5FB59D1494 /* HotKeyManager.swift */,
 				47051AA8B9D9EA65B3B66124 /* LiveDiagnostics.swift */,
 				D7E9BF28654CDA519BA82B04 /* Localization.swift */,
 			);
@@ -326,6 +329,7 @@
 				B855ABC819A07197EE963ED3 /* CommonTheme.swift in Sources */,
 				CEF667FD8B6535993D724E68 /* DetectionGate.swift in Sources */,
 				8AF5456CBA91347668E10831 /* GuardModel.swift in Sources */,
+				38B8EEEB5B759D4CC13F62D2 /* HotKeyManager.swift in Sources */,
 				0F5BA859701552EEB5007A58 /* LiveDiagnostics.swift in Sources */,
 				79327E4BB74776C71B60C8B6 /* Localization.swift in Sources */,
 				2B08DE034BB329DB8799AFE7 /* MainScreen.swift in Sources */,

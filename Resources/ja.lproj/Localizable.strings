@@ -25,7 +25,7 @@
 "guard.retract" = "手を戻すと警告が消えます";
 "guard.escapeClose" = "Esc で閉じる";
 "guard.escapePause" = "Esc でガードを一時停止";
-"guard.shortcuts" = "Esc で警告を終了\n閉じた後もメニューバーで操作";
+"guard.shortcuts" = "Esc で警告を終了\n⌥⌘G でいつでも保護を切替";
 "image.caption" = "全画面の警告";
 "image.change" = "画像を変更";
 "image.reset" = "元に戻す";

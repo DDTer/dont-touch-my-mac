@@ -25,7 +25,7 @@
 "guard.retract" = "把手收回，警告将自动消失";
 "guard.escapeClose" = "Esc 关闭";
 "guard.escapePause" = "Esc 暂停护屏";
-"guard.shortcuts" = "Esc 随时退出警告\n关掉窗口后，菜单栏仍可控制";
+"guard.shortcuts" = "Esc 随时退出警告\n⌥⌘G 可随时开启/暂停护屏";
 "image.caption" = "全屏警告画面";
 "image.change" = "换张图片";
 "image.reset" = "还原";
