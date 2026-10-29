@@ -51,7 +51,8 @@ final class GuardModel: ObservableObject {
     @Published var triggers = 0
     let camera = CameraEngine()
     let diagnostics = LiveDiagnostics()
-    var overlay: NSWindow?
+    var overlays: [WarningWindow] = []
+    var overlay: NSWindow? { overlays.first }
     private var returnToApp: NSRunningApplication?
     var previewTimer: Timer?
     var watchdog: Timer?
@@ -260,22 +261,24 @@ final class GuardModel: ObservableObject {
             returnToApp = previous
         }
         isPreview = preview
-        // The camera belongs to the built-in display. Fall back to the main display on desktops.
-        let screen = NSScreen.screens.first(where: {
-            guard let number = $0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return false }
-            return CGDisplayIsBuiltin(number.uint32Value) != 0
-        }) ?? NSScreen.main ?? NSScreen.screens.first
-        guard let screen else { return }
-        let window = WarningWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue - 1)
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.isReleasedWhenClosed = false
-        window.backgroundColor = .black
-        window.contentView = NSHostingView(rootView: WarningScreen(model: self, preview: preview))
-        window.onEscape = { [weak self] in self?.dismissWarning() }
-        overlay = window
-        window.setFrame(screen.frame, display: true)
-        window.makeKeyAndOrderFront(nil)
+        let screens = NSScreen.screens.isEmpty ? (NSScreen.main.map { [$0] } ?? []) : NSScreen.screens
+        guard !screens.isEmpty else { return }
+
+        var newOverlays: [WarningWindow] = []
+        for screen in screens {
+            let window = WarningWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
+            window.level = NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue - 1)
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            window.isReleasedWhenClosed = false
+            window.backgroundColor = .black
+            window.contentView = NSHostingView(rootView: WarningScreen(model: self, preview: preview))
+            window.onEscape = { [weak self] in self?.dismissWarning() }
+            window.setFrame(screen.frame, display: true)
+            window.orderFront(nil)
+            newOverlays.append(window)
+        }
+        overlays = newOverlays
+        overlays.first?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         playWarningVoice()
         if preview {
@@ -287,8 +290,12 @@ final class GuardModel: ObservableObject {
 
     func hideOverlay() {
         previewTimer?.invalidate(); previewTimer = nil
-        let hadOverlay = overlay != nil
-        overlay?.orderOut(nil); overlay?.close(); overlay = nil
+        let hadOverlay = !overlays.isEmpty
+        for window in overlays {
+            window.orderOut(nil)
+            window.close()
+        }
+        overlays.removeAll()
         isPreview = false
         if hadOverlay, let previous = returnToApp, !previous.isTerminated {
             previous.activate(options: [])
