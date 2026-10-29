@@ -13,7 +13,7 @@ struct MainScreen: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 5) {
-                    Text("V" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.10.2")).font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundStyle(muted)
+                    Text("V" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.10.3")).font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundStyle(muted)
                     Picker(model.t("language.label"), selection: $model.languageMode) {
                         ForEach(LanguageMode.allCases) { mode in
                             Text(model.localizer.modeName(mode)).tag(mode)
