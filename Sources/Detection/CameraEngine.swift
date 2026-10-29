@@ -106,11 +106,11 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 let points = try hand.recognizedPoints(.all)
                 var pose: [Int: HandPoint] = [:]
                 for (i, name) in names.enumerated() {
-                    guard let point = points[name], point.confidence >= 0.25 else { continue }
+                    guard let point = points[name], point.confidence >= 0.20 else { continue }
                     pose[i] = HandPoint(x: point.location.x * aspect, y: point.location.y)
                 }
                 reliablePointCount = max(reliablePointCount, pose.count)
-                guard pose.count >= 6 else { continue }
+                guard pose.count >= 4 else { continue }
                 let xs = pose.values.map { $0.x }, ys = pose.values.map { $0.y }
                 let width = (xs.max() ?? 0) - (xs.min() ?? 0)
                 let height = (ys.max() ?? 0) - (ys.min() ?? 0)

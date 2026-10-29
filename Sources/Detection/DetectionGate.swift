@@ -186,7 +186,7 @@ struct DetectionGate {
             let h = Array(track.history.suffix(count))
             diagnostics["evaluationFrames"] = Double(h.count)
             guard h.count >= 4, let first = h.first, let last = h.last,
-                  last.time - first.time >= 0.18 else { continue }
+                  last.time - first.time >= 0.14 else { continue }
             diagnostics["windowSeconds"] = last.time - first.time
             func median(_ values: [Double]) -> Double { values.sorted()[values.count / 2] }
             var scales = h.map { $0.hand.scale }
@@ -258,7 +258,7 @@ struct DetectionGate {
                     }
                 }
                 let palms = lengthsForEdges(palmEdges), fingers = lengthsForEdges(fingerEdges)
-                if palms.count >= 2 && fingers.count >= 3 {
+                if (palms.count >= 2 && fingers.count >= 3) || (palms.count >= 1 && fingers.count >= 2) {
                     func growthOf(_ edges: [[Double]]) -> Double {
                         median(edges.map { values in
                             (values[values.count - 2] + values.last!) / (values[0] + values[1])
@@ -274,8 +274,8 @@ struct DetectionGate {
                         (values[values.count - 2] + values.last!) / (values[0] + values[1])
                     }
                     boneAgreement = Double(boneGrowth.filter { $0 >= 1.04 }.count) / Double(boneGrowth.count)
-                    poseConsistent = palmGrowth >= 1.07 && fingerGrowth >= 1.08 &&
-                        abs(log(palmGrowth / fingerGrowth)) <= 0.22 && boneAgreement >= 0.65
+                    poseConsistent = palmGrowth >= 1.06 && fingerGrowth >= 1.06 &&
+                        abs(log(palmGrowth / fingerGrowth)) <= 0.25 && boneAgreement >= 0.60
                     usingBones = true
                     diagnostics["palmGrowth"] = palmGrowth
                     diagnostics["fingerGrowth"] = fingerGrowth
@@ -337,10 +337,10 @@ struct DetectionGate {
                 progress = max(progress, min(1, max(0, (ratio - 1) / (targetGrowth - 1))) * min(1, nearScale / threshold))
                 reason = "motion.approaching"
             }
-            let stillGrowing = scales.last! >= scales[scales.count - 3] * 1.025
+            let stillGrowing = scales.last! >= scales[scales.count - 3] * 1.015
             // Low, nearly horizontal keyboard motion needs stronger evidence.
-            let keyboardMotion = last.hand.y < 0.22 && last.hand.y - first.hand.y < 0.035
-            let typingSafe = !keyboardMotion || ratio >= max(1.40, targetGrowth)
+            let keyboardMotion = last.hand.y < 0.18 && last.hand.y - first.hand.y < 0.025
+            let typingSafe = !keyboardMotion || ratio >= max(1.35, targetGrowth)
             diagnostics["targetGrowth"] = targetGrowth
             diagnostics["stillGrowing"] = stillGrowing ? 1 : 0
             diagnostics["reachesNear"] = reachesNear ? 1 : 0
@@ -488,6 +488,11 @@ func runGateTests() {
     }
     precondition(timed(liftingReach).first?.0 == .show)
     print("PASS: reaching upward from keyboard is not treated as lateral waving")
+    let pointingReach = (0..<25).map { i in
+        [anatomical(0.42 + Double(i) * 0.03, omit: Set([10,11,12,14,15,16,18,19,20]))]
+    }
+    precondition(timed(pointingReach).first?.0 == .show)
+    print("PASS: pointing finger reach with curled fingers triggers warning")
     let veryShortLoss = naturalReach + (0..<3).map { _ in [] } + (0..<10).map { _ in [anatomical(1.02)] }
     precondition(timed(veryShortLoss).map { $0.0 } == [.show])
     print("PASS: 150ms keypoint loss does not flicker warning")
