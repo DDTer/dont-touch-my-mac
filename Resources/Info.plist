@@ -12,6 +12,7 @@
 <key>CFBundleLocalizations</key><array><string>en</string><string>ja</string><string>zh-Hans</string></array>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSCameraUsageDescription</key><string>Detect approaching hands on this Mac and show a warning. Camera video is not recorded or uploaded.</string>
 </dict></plist>

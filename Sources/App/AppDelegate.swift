@@ -14,7 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var localizedMenuItems: [(NSMenuItem, String)] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
+        NSApp.setActivationPolicy(.accessory)
         let root = MainScreen(model: model)
         let host = NSHostingController(rootView: root)
         mainWindow = NSWindow(contentViewController: host)
