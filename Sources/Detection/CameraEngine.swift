@@ -110,10 +110,10 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                     pose[i] = HandPoint(x: point.location.x * aspect, y: point.location.y)
                 }
                 reliablePointCount = max(reliablePointCount, pose.count)
-                guard pose.count >= 4 else { continue }
+                guard pose.count >= 2 else { continue }
                 let xs = pose.values.map { $0.x }, ys = pose.values.map { $0.y }
-                let width = (xs.max() ?? 0) - (xs.min() ?? 0)
-                let height = (ys.max() ?? 0) - (ys.min() ?? 0)
+                let width = max(0.04, (xs.max() ?? 0) - (xs.min() ?? 0))
+                let height = max(0.04, (ys.max() ?? 0) - (ys.min() ?? 0))
                 let side: Int = hand.chirality == .left ? 1 : hand.chirality == .right ? 2 : 0
                 hands.append(HandMeasurement(x: xs.reduce(0,+) / Double(xs.count), y: ys.reduce(0,+) / Double(ys.count), width: width, length: height, side: side, pose: pose))
             }
