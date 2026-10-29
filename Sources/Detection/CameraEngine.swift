@@ -10,6 +10,7 @@ struct HandFrame {
     let reliablePointCount: Int
     let timestamp: Double
     let epoch: Int
+    var processingSeconds = 0.0
 }
 
 final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
@@ -84,7 +85,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     }
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let now = ProcessInfo.processInfo.systemUptime
-        guard now - lastFrame >= 0.095 else { return }
+        guard now - lastFrame >= 0.045 else { return }
         lastFrame = now
         do {
             let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
@@ -115,7 +116,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 let side: Int = hand.chirality == .left ? 1 : hand.chirality == .right ? 2 : 0
                 hands.append(HandMeasurement(x: xs.reduce(0,+) / Double(xs.count), y: ys.reduce(0,+) / Double(ys.count), width: width, length: height, side: side, pose: pose))
             }
-            let frame = HandFrame(hands: hands, recognizedCount: request.results?.count ?? 0, reliablePointCount: reliablePointCount, timestamp: now, epoch: epoch)
+            let frame = HandFrame(hands: hands, recognizedCount: request.results?.count ?? 0, reliablePointCount: reliablePointCount, timestamp: now, epoch: epoch, processingSeconds: ProcessInfo.processInfo.systemUptime - now)
             DispatchQueue.main.async { [weak self] in self?.onFrame?(frame) }
         } catch {
             report(LocalizedMessage("error.handDetection", [error.localizedDescription]))

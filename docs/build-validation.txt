@@ -21,5 +21,15 @@ PASS: handedness classifier flicker must preserve track
 PASS: retreat then fast reach must not be diluted
 PASS: frame gaps cannot accumulate approach
 PASS: reset / cooldown
+PASS: anatomical approach triggers within 650ms (0.5s)
+PASS: withdrawal from post-trigger peak restores within 200ms
+PASS: disappeared hand restores within 450ms
+PASS: 30 seconds of low typing / finger flex / scale noise
+PASS: lateral waving with incidental scale changes
+PASS: modest diagonal approach still triggers
+PASS: reaching upward from keyboard is not treated as lateral waving
+PASS: 150ms keypoint loss does not flicker warning
+PASS: partial keypoint loss must not look like withdrawal
+PASS: approach at 10, 20 and 30 fps
 PASS: system language resolution, manual override, three complete catalogs, matching format placeholders
 构建完成：/Users/ddter/Dev/dont-touch-my-mac/build/Build/Products/Release/Don't Touch My Mac.app

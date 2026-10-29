@@ -23,6 +23,8 @@ final class LiveDiagnostics: @unchecked Sendable {
         guard file != nil else { return }
         var metrics = gate.diagnostics.filter { $0.value.isFinite }
         metrics["elapsed"] = frame.timestamp - started
+        metrics["visionMilliseconds"] = frame.processingSeconds * 1000
+        metrics["deliveryMilliseconds"] = max(0, ProcessInfo.processInfo.systemUptime - frame.timestamp) * 1000
         metrics["recognized"] = Double(frame.recognizedCount)
         metrics["usable"] = Double(frame.hands.count)
         metrics["points"] = Double(frame.reliablePointCount)
@@ -448,7 +450,7 @@ struct MainScreen: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 5) {
-                    Text("V0.8.0").font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundStyle(muted)
+                    Text("V" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.9.0")).font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundStyle(muted)
                     Picker(model.t("language.label"), selection: $model.languageMode) {
                         ForEach(LanguageMode.allCases) { mode in
                             Text(model.localizer.modeName(mode)).tag(mode)

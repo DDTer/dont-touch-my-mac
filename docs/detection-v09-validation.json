@@ -1,0 +1,346 @@
+{
+  "version": "0.9.0",
+  "date": "2026-10-29",
+  "automatedDetectionScenarios": 33,
+  "localizationRegression": "passed",
+  "nativeReleaseBuild": "passed arm64 and x86_64; executed arm64 only",
+  "syntheticTimingComparison": [
+    {
+      "name": "standard approach at 20fps",
+      "v08": [
+        {
+          "event": "show",
+          "time": 0.65
+        }
+      ],
+      "v09": [
+        {
+          "event": "show",
+          "time": 0.5
+        }
+      ]
+    },
+    {
+      "name": "withdraw 28 percent from post-trigger peak at 1.75s",
+      "v08": [
+        {
+          "event": "show",
+          "time": 0.65
+        }
+      ],
+      "v09": [
+        {
+          "event": "show",
+          "time": 0.5
+        },
+        {
+          "event": "hide",
+          "time": 1.85
+        }
+      ]
+    },
+    {
+      "name": "hand disappears at 1.25s",
+      "v08": [
+        {
+          "event": "show",
+          "time": 0.65
+        },
+        {
+          "event": "hide",
+          "time": 1.85
+        }
+      ],
+      "v09": [
+        {
+          "event": "show",
+          "time": 0.5
+        },
+        {
+          "event": "hide",
+          "time": 1.65
+        }
+      ]
+    }
+  ],
+  "syntheticNegatives": [
+    "30 seconds typing-style finger articulation and small scale noise",
+    "lateral waving with incidental scale changes",
+    "large stationary hand",
+    "isolated scale spike",
+    "finger spreading",
+    "changing visible joints",
+    "two hands and handedness flicker"
+  ],
+  "recordedLandmarkReplay": {
+    "frames": 2175,
+    "framesWithHands": 299,
+    "baselineWarnings": 10,
+    "newWarnings": 15,
+    "baselineEvents": [
+      {
+        "event": "show",
+        "time": 152.79972975002602
+      },
+      {
+        "event": "hide",
+        "time": 154.80042720842175
+      },
+      {
+        "event": "show",
+        "time": 157.10223141685128
+      },
+      {
+        "event": "hide",
+        "time": 161.70275441673584
+      },
+      {
+        "event": "show",
+        "time": 173.84832254168577
+      },
+      {
+        "event": "hide",
+        "time": 175.3767148333136
+      },
+      {
+        "event": "show",
+        "time": 180.88166345842183
+      },
+      {
+        "event": "hide",
+        "time": 181.88234954164363
+      },
+      {
+        "event": "show",
+        "time": 183.88614533352666
+      },
+      {
+        "event": "hide",
+        "time": 184.88704179180786
+      },
+      {
+        "event": "show",
+        "time": 187.08743883343413
+      },
+      {
+        "event": "hide",
+        "time": 188.1850659584161
+      },
+      {
+        "event": "show",
+        "time": 191.1242492501624
+      },
+      {
+        "event": "hide",
+        "time": 195.85859233350493
+      },
+      {
+        "event": "show",
+        "time": 199.35699070850387
+      },
+      {
+        "event": "hide",
+        "time": 201.05737349996343
+      },
+      {
+        "event": "show",
+        "time": 204.66026516677812
+      },
+      {
+        "event": "hide",
+        "time": 206.25906979176216
+      },
+      {
+        "event": "show",
+        "time": 207.65916604176164
+      },
+      {
+        "event": "hide",
+        "time": 208.69339975016192
+      }
+    ],
+    "newEvents": [
+      {
+        "event": "show",
+        "time": 152.69974637497216
+      },
+      {
+        "event": "hide",
+        "time": 154.60042854165658
+      },
+      {
+        "event": "show",
+        "time": 157.10223141685128
+      },
+      {
+        "event": "hide",
+        "time": 157.90196670847945
+      },
+      {
+        "event": "show",
+        "time": 160.40287629165687
+      },
+      {
+        "event": "hide",
+        "time": 160.90388600016013
+      },
+      {
+        "event": "show",
+        "time": 173.84832254168577
+      },
+      {
+        "event": "hide",
+        "time": 174.34778004162945
+      },
+      {
+        "event": "show",
+        "time": 180.88166345842183
+      },
+      {
+        "event": "hide",
+        "time": 181.3815636250656
+      },
+      {
+        "event": "show",
+        "time": 183.88614533352666
+      },
+      {
+        "event": "hide",
+        "time": 184.38278775010258
+      },
+      {
+        "event": "show",
+        "time": 187.08743883343413
+      },
+      {
+        "event": "hide",
+        "time": 187.58477962506004
+      },
+      {
+        "event": "show",
+        "time": 188.58611179166473
+      },
+      {
+        "event": "hide",
+        "time": 189.11826975014992
+      },
+      {
+        "event": "show",
+        "time": 191.41990387509577
+      },
+      {
+        "event": "hide",
+        "time": 192.02062329184264
+      },
+      {
+        "event": "show",
+        "time": 194.15439620846882
+      },
+      {
+        "event": "hide",
+        "time": 195.15764566673897
+      },
+      {
+        "event": "show",
+        "time": 196.75485079176724
+      },
+      {
+        "event": "hide",
+        "time": 197.25766445836052
+      },
+      {
+        "event": "show",
+        "time": 199.35699070850387
+      },
+      {
+        "event": "hide",
+        "time": 200.05715566664003
+      },
+      {
+        "event": "show",
+        "time": 202.05923716677353
+      },
+      {
+        "event": "hide",
+        "time": 202.65972120850347
+      },
+      {
+        "event": "show",
+        "time": 204.66026516677812
+      },
+      {
+        "event": "hide",
+        "time": 205.15983766666614
+      },
+      {
+        "event": "show",
+        "time": 207.35911795846187
+      },
+      {
+        "event": "hide",
+        "time": 208.49330120836385
+      }
+    ],
+    "nearestOnsetShiftSeconds": [
+      -0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.296,
+      0.0,
+      0.0,
+      -0.3
+    ],
+    "limitation": "Unlabeled recording has no ground truth action times. Additional events may be previously missed approaches, faster rearming or false positives. Matched shifts are descriptive only; one is 296ms later. This is not proof of live accuracy or a false-positive rate."
+  },
+  "liveCamera": {
+    "frames": 1545,
+    "durationSeconds": 102.88,
+    "medianFrameIntervalMs": 66.7,
+    "visionMsMedian": 7.92,
+    "visionMsP95": 26.64,
+    "deliveryMsP95": 27.81,
+    "framesWithHands": 156,
+    "events": [
+      {
+        "time": 32.247004916658625,
+        "event": "show"
+      },
+      {
+        "time": 33.70862958324142,
+        "event": "hide"
+      },
+      {
+        "time": 34.97929716669023,
+        "event": "show"
+      },
+      {
+        "time": 36.313290250021964,
+        "event": "hide"
+      },
+      {
+        "time": 39.94559587491676,
+        "event": "show"
+      },
+      {
+        "time": 41.21959237498231,
+        "event": "hide"
+      }
+    ],
+    "acceptance": "User confirmed normal triggering/restoration and no false positives in the requested short trial."
+  },
+  "liveGestureAcceptance": {
+    "status": "passed by user",
+    "sequence": "10 seconds normal typing; 3 lateral waves; 3 natural approaches and withdrawals",
+    "feedback": "触发和恢复正常，没有误报",
+    "observedLog": "3 show transitions and 3 hide transitions",
+    "limitation": "Single short user trial; no long-duration false-positive rate or labeled end-to-end latency measurement."
+  },
+  "limitations": [
+    "Monocular projected hand geometry cannot fully distinguish approach from every pose rotation.",
+    "Timing figures above are deterministic simulations, not real camera end-to-end latency.",
+    "Long-duration human typing and waving, Intel hardware and older macOS remain unverified."
+  ]
+}

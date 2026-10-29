@@ -44,9 +44,31 @@ struct DetectionGate {
     private var lastNear = -Double.infinity
     private var cooldownUntil = -Double.infinity
     private var previousTime = -Double.infinity
+    private var retreatSince: Double?
+    private var approachSince: [Int: Double] = [:]
+    private static let palmEdges = [(0,1),(0,5),(0,9),(0,13),(0,17),(5,9),(9,13),(13,17),(5,17)]
+    private static let fingerEdges = [1,5,9,13,17].flatMap { start in (start..<(start + 3)).map { ($0,$0 + 1) } }
+
+    private static func boneScale(_ hand: HandMeasurement, relativeTo reference: HandMeasurement) -> Double? {
+        func medianRatio(_ edges: [(Int,Int)]) -> Double? {
+            let ratios = edges.compactMap { a,b -> Double? in
+                guard let p = reference.pose[a], let q = reference.pose[b],
+                      let u = hand.pose[a], let v = hand.pose[b] else { return nil }
+                let before = hypot(p.x - q.x, p.y - q.y)
+                guard before >= 0.006 else { return nil }
+                return hypot(u.x - v.x, u.y - v.y) / before
+            }.sorted()
+            guard ratios.count >= (edges.count == palmEdges.count ? 2 : 3) else { return nil }
+            return ratios[ratios.count / 2]
+        }
+        guard let palm = medianRatio(palmEdges), let finger = medianRatio(fingerEdges),
+              abs(log(max(palm, 0.001) / max(finger, 0.001))) < 0.30 else { return nil }
+        return sqrt(palm * finger)
+    }
 
     mutating func reset(now: Double, cooldown: Double = 0) {
         visible = false; progress = 0; growth = 1; tracks = []
+        retreatSince = nil; approachSince.removeAll()
         ownerID = nil; ownerReference = nil; triggerScale = 0
         lastNear = -.infinity; shownAt = -.infinity; previousTime = -.infinity
         cooldownUntil = now + cooldown
@@ -97,31 +119,40 @@ struct DetectionGate {
         if visible {
             if let owner = tracks.first(where: { $0.id == ownerID && currentIDs.contains($0.id) }) {
                 let hand = owner.latest.hand
-                var stillNear = hand.scale >= max(threshold * 0.65, triggerScale * 0.72)
-                if let reference = ownerReference {
-                    let palms = [(0,1),(0,5),(0,9),(0,13),(0,17),(5,9),(9,13),(13,17),(5,17)]
-                    let fingers = [1,5,9,13,17].flatMap { start in (start..<(start + 3)).map { ($0,$0 + 1) } }
-                    func ratios(_ edges: [(Int,Int)]) -> [Double] {
-                        edges.compactMap { a,b in
-                            guard let p = reference.pose[a], let q = reference.pose[b],
-                                  let u = hand.pose[a], let v = hand.pose[b] else { return nil }
-                            let initial = hypot(p.x - q.x, p.y - q.y)
-                            guard initial >= 0.006 else { return nil }
-                            return hypot(u.x - v.x, u.y - v.y) / initial
+                // Follow the closest *confirmed* pose after triggering. Comparing
+                // only with the first trigger misses withdrawal from a later peak.
+                let hasPose = !(ownerReference?.pose.isEmpty ?? true)
+                let relative = hasPose
+                    ? ownerReference.flatMap { Self.boneScale(hand, relativeTo: $0) }
+                    : hand.scale / max(triggerScale, 0.001)
+                if let relative {
+                    diagnostics["relativePeakScale"] = relative
+                    if relative > 1.04, owner.history.count >= 2 {
+                        let previous = owner.history[owner.history.count - 2].hand
+                        let previousRelative = hasPose
+                            ? ownerReference.flatMap { Self.boneScale(previous, relativeTo: $0) }
+                            : previous.scale / max(triggerScale, 0.001)
+                        if let previousRelative, previousRelative > 1.02 {
+                            ownerReference = hand; triggerScale = hand.scale
                         }
                     }
-                    let palm = ratios(palms).sorted(), finger = ratios(fingers).sorted()
-                    if palm.count >= 2 && finger.count >= 3 {
-                        let relative = sqrt(palm[palm.count / 2] * finger[finger.count / 2])
-                        stillNear = relative >= 0.80
-                        diagnostics["relativeBoneScale"] = relative
-                    }
+                    lastNear = now
+                    if relative <= 0.86 {
+                        if retreatSince == nil { retreatSince = now }
+                    } else { retreatSince = nil }
+                } else {
+                    // A changed keypoint set must not masquerade as shrinkage.
+                    retreatSince = nil
                 }
-                if stillNear { lastNear = now }
+            } else {
+                // A missing frame is not evidence of retreat; tolerate brief
+                // occlusion while keeping disappearance recovery under 0.5s.
+                retreatSince = nil
             }
             reason = "motion.holding"
-            if now - lastNear >= 0.65 && now - shownAt >= 1.0 {
-                reset(now: now, cooldown: 1.0)
+            let withdrawn = retreatSince.map { now - $0 >= 0.10 } ?? false
+            if now - shownAt >= 0.28 && (withdrawn || now - lastNear >= 0.42) {
+                reset(now: now, cooldown: 0.30)
                 return .hide
             }
             return nil
@@ -134,6 +165,7 @@ struct DetectionGate {
             return nil
         }
         reason = valid.isEmpty ? "motion.waiting" : "motion.detected"
+        var qualifiedIDs = Set<Int>()
         for track in tracks where currentIDs.contains(track.id) {
             // Evaluate recent suffixes independently: initial holding/turning
             // must not dilute a valid short approach later in the same track.
@@ -142,7 +174,7 @@ struct DetectionGate {
             let h = Array(track.history.suffix(count))
             diagnostics["evaluationFrames"] = Double(h.count)
             guard h.count >= 4, let first = h.first, let last = h.last,
-                  last.time - first.time >= 0.25 else { continue }
+                  last.time - first.time >= 0.18 else { continue }
             diagnostics["windowSeconds"] = last.time - first.time
             func median(_ values: [Double]) -> Double { values.sorted()[values.count / 2] }
             var scales = h.map { $0.hand.scale }
@@ -150,11 +182,21 @@ struct DetectionGate {
             var lengths = h.map { $0.hand.length }
             var poseConsistent = true
             var usingBones = false
+            var boneAgreement = 0.0
+            var centers = h.map { HandPoint(x: $0.hand.x, y: $0.hand.y) }
             if h.contains(where: { !$0.hand.pose.isEmpty }) {
                 // Use exactly the SAME visible keypoints throughout this window.
                 // A point appearing/disappearing cannot enlarge the measurement.
                 let common = h.reduce(Set(first.hand.pose.keys)) { $0.intersection($1.hand.pose.keys) }.sorted()
                 diagnostics["commonPoints"] = Double(common.count)
+                let palmJoints = common.filter { [0,1,5,9,13,17].contains($0) }
+                let centerJoints = palmJoints.count >= 2 ? palmJoints : common
+                if !centerJoints.isEmpty {
+                    centers = h.map { sample in
+                        HandPoint(x: centerJoints.map { sample.hand.pose[$0]!.x }.reduce(0,+) / Double(centerJoints.count),
+                                  y: centerJoints.map { sample.hand.pose[$0]!.y }.reduce(0,+) / Double(centerJoints.count))
+                    }
+                }
                 guard common.count >= 5 else { reason = "motion.keypoints"; continue }
                 let pairs = common.enumerated().flatMap { i, a in common.dropFirst(i + 1).map { (a, $0) } }
                     .filter { a, b in
@@ -186,8 +228,7 @@ struct DetectionGate {
                 // Anatomical bone lengths are unaffected by finger spread. Use
                 // robust palm + finger evidence instead of requiring the entire
                 // articulated hand to stay a rigid shape during a natural reach.
-                let palmEdges = [(0,1),(0,5),(0,9),(0,13),(0,17),(5,9),(9,13),(13,17),(5,17)]
-                let fingerEdges = [1,5,9,13,17].flatMap { start in (start..<(start + 3)).map { ($0,$0 + 1) } }
+                let palmEdges = Self.palmEdges, fingerEdges = Self.fingerEdges
                 func lengthsForEdges(_ edges: [(Int,Int)]) -> [[Double]] {
                     edges.compactMap { a,b in
                         var values: [Double] = []
@@ -213,7 +254,12 @@ struct DetectionGate {
                         let finger = median(fingers.map { $0[i] / $0[0] })
                         return sqrt(palm * finger)
                     }
-                    poseConsistent = palmGrowth >= 1.07 && fingerGrowth >= 1.10
+                    let boneGrowth = (palms + fingers).map { values in
+                        (values[values.count - 2] + values.last!) / (values[0] + values[1])
+                    }
+                    boneAgreement = Double(boneGrowth.filter { $0 >= 1.04 }.count) / Double(boneGrowth.count)
+                    poseConsistent = palmGrowth >= 1.07 && fingerGrowth >= 1.08 &&
+                        abs(log(palmGrowth / fingerGrowth)) <= 0.22 && boneAgreement >= 0.65
                     usingBones = true
                     diagnostics["palmGrowth"] = palmGrowth
                     diagnostics["fingerGrowth"] = fingerGrowth
@@ -230,7 +276,14 @@ struct DetectionGate {
             let lengthRatio = (lengths[lengths.count - 2] + lengths.last!) / max(lengths[0] + lengths[1], 0.001)
             let shapes = zip(widths, lengths).map { $0 / max($1, 0.001) }
             let shapeChange = (shapes.max() ?? 1) / max(shapes.min() ?? 1, 0.001)
-            let lateralTravel = hypot(last.hand.x - first.hand.x, last.hand.y - first.hand.y)
+            // Accumulated path catches a sideways wave that returns to its start.
+            // Reaching up from the keyboard is expected; horizontal motion gets
+            // full weight while vertical motion remains a weaker constraint.
+            let lateralTravel = zip(centers, centers.dropFirst()).map {
+                hypot($1.x - $0.x, ($1.y - $0.y) * 0.35)
+            }.reduce(0,+)
+            let lateralRelative = lateralTravel / max(nearScale, 0.05)
+            let depthDominant = log(max(ratio, 1)) >= lateralRelative * 0.42
             let meanT = h.map { $0.time }.reduce(0,+) / Double(h.count)
             let logs = scales.map { log(max($0, 0.001)) }
             let meanS = logs.reduce(0,+) / Double(h.count)
@@ -243,8 +296,8 @@ struct DetectionGate {
             let rising = zip(scales, scales.dropFirst()).filter { $1 >= $0 * 0.96 }.count
             let coherent = poseConsistent && covariance > 0 && r2 >= (usingBones ? 0.60 : 0.75) &&
                 Double(rising) / Double(h.count - 1) >= (usingBones ? 0.60 : 0.75) &&
-                widthRatio >= 1.10 && lengthRatio >= 1.10 &&
-                (usingBones || shapeChange <= 1.55) && lateralTravel <= 0.40
+                (usingBones || (widthRatio >= 1.10 && lengthRatio >= 1.10 && shapeChange <= 1.55)) &&
+                depthDominant && lateralTravel <= 0.40
             diagnostics["ratio"] = ratio
             diagnostics["nearScale"] = nearScale
             diagnostics["rSquared"] = r2
@@ -253,16 +306,40 @@ struct DetectionGate {
             diagnostics["lengthRatio"] = lengthRatio
             diagnostics["shapeChange"] = shapeChange
             diagnostics["lateralTravel"] = lateralTravel
+            diagnostics["depthDominant"] = depthDominant ? 1 : 0
+            diagnostics["boneAgreement"] = boneAgreement
             diagnostics["poseConsistent"] = poseConsistent ? 1 : 0
             diagnostics["coherent"] = coherent ? 1 : 0
             if !poseConsistent && progress == 0 { reason = "motion.pose" }
+            // With independent palm+finger evidence, require less expansion and
+            // project at most 120ms ahead. Bounding-box-only input stays stricter.
+            let targetGrowth = usingBones ? max(1.14, requiredGrowth - 0.07) : requiredGrowth
+            let slope = covariance / max(varianceT, 0.000001)
+            let predictedNear = nearScale * exp(min(0.14, max(0, slope) * 0.12))
+            let reachesNear = nearScale >= threshold || (usingBones && nearScale >= threshold * 0.87 && predictedNear >= threshold)
             if coherent {
-                progress = max(progress, min(1, max(0, (ratio - 1) / (requiredGrowth - 1))) * min(1, nearScale / threshold))
+                progress = max(progress, min(1, max(0, (ratio - 1) / (targetGrowth - 1))) * min(1, nearScale / threshold))
                 reason = "motion.approaching"
             }
             let stillGrowing = scales.last! >= scales[scales.count - 3] * 1.025
-            if coherent && stillGrowing && ratio >= requiredGrowth &&
-                nearScale * (1 - 1 / ratio) >= max(0.025, threshold * 0.20) && nearScale >= threshold {
+            // Low, nearly horizontal keyboard motion needs stronger evidence.
+            let keyboardMotion = last.hand.y < 0.22 && last.hand.y - first.hand.y < 0.035
+            let typingSafe = !keyboardMotion || ratio >= max(1.40, targetGrowth)
+            diagnostics["targetGrowth"] = targetGrowth
+            diagnostics["stillGrowing"] = stillGrowing ? 1 : 0
+            diagnostics["reachesNear"] = reachesNear ? 1 : 0
+            diagnostics["typingSafe"] = typingSafe ? 1 : 0
+            if coherent && stillGrowing && typingSafe && ratio >= max(1.10, targetGrowth - 0.06) {
+                qualifiedIDs.insert(track.id)
+                if approachSince[track.id] == nil { approachSince[track.id] = now }
+            }
+            if coherent && stillGrowing && ratio >= targetGrowth && typingSafe &&
+                nearScale * (1 - 1 / ratio) >= max(0.018, threshold * (usingBones ? 0.14 : 0.20)) && reachesNear {
+                let confirmedInWindow = usingBones && r2 >= 0.80 && boneAgreement >= 0.80 &&
+                    scales.last! >= scales[scales.count - 2] * 1.02 &&
+                    scales[scales.count - 2] >= scales[scales.count - 3] * 1.02
+                let confirmedAcrossFrames = approachSince[track.id].map { now - $0 >= 0.06 } ?? false
+                guard confirmedInWindow || confirmedAcrossFrames else { continue }
                 visible = true; ownerID = track.id
                 shownAt = now; lastNear = now; triggerScale = nearScale; ownerReference = last.hand
                 progress = 1; reason = "motion.confirmed"
@@ -270,6 +347,7 @@ struct DetectionGate {
             }
             }
         }
+        approachSince = approachSince.filter { qualifiedIDs.contains($0.key) }
         return nil
     }
 }
@@ -329,4 +407,79 @@ func runGateTests() {
     gap.reset(now: 4, cooldown: 1)
     precondition(!gap.visible && gap.ingest(hands: [hand(0.5)], now: 4.1) == nil)
     print("PASS: reset / cooldown")
+    // Anatomical 21-joint fixtures cover articulated hands, not only bounding boxes.
+    func anatomical(_ factor: Double, x: Double = 0.65, y: Double = 0.50,
+                    fingerFlex: Double = 0, omit: Set<Int> = []) -> HandMeasurement {
+        let template: [(Double,Double)] = [
+            (0,-0.10),(-0.045,-0.055),(-0.08,-0.02),(-0.105,0.015),(-0.13,0.045),
+            (-0.045,0),(-0.05,0.07),(-0.052,0.12),(-0.054,0.16),
+            (0,0.015),(0,0.09),(0,0.145),(0,0.19),
+            (0.04,0.005),(0.045,0.075),(0.05,0.12),(0.055,0.155),
+            (0.075,-0.02),(0.085,0.035),(0.09,0.075),(0.095,0.11)]
+        var pose: [Int: HandPoint] = [:]
+        for (i,p) in template.enumerated() where !omit.contains(i) {
+            let tip = i > 4 && i % 4 != 1
+            pose[i] = HandPoint(x: x + p.0 * factor,
+                                y: y + (p.1 - (tip ? fingerFlex * Double(i % 4 + 1) * 0.012 : 0)) * factor)
+        }
+        let xs = pose.values.map { $0.x }, ys = pose.values.map { $0.y }
+        return HandMeasurement(x: x, y: y, width: xs.max()! - xs.min()!, length: ys.max()! - ys.min()!, side: 1, pose: pose)
+    }
+    func timed(_ frames: [[HandMeasurement]], fps: Double = 20) -> [(DetectionGate.Event,Double)] {
+        var gate = DetectionGate(), events: [(DetectionGate.Event,Double)] = []
+        for (i,hands) in frames.enumerated() {
+            let time = Double(i) / fps
+            if let event = gate.ingest(hands: hands, now: time) { events.append((event,time)) }
+        }
+        return events
+    }
+    let naturalReach = (0..<25).map { [anatomical(0.42 + Double($0) * 0.025)] }
+    let early = timed(naturalReach)
+    precondition(early.count == 1 && early[0].0 == .show && early[0].1 <= 0.65, "natural reach must trigger within 650ms")
+    print("PASS: anatomical approach triggers within 650ms (\(early[0].1)s)")
+    let peakHold = naturalReach + (0..<10).map { _ in [anatomical(1.8)] }
+    let withdrawal = timed(peakHold + (0..<15).map { _ in [anatomical(1.3)] })
+    let retreatAt = Double(peakHold.count) / 20
+    precondition(withdrawal.count == 2 && withdrawal[1].0 == .hide && withdrawal[1].1 - retreatAt <= 0.20,
+                 "withdrawal from a later peak must restore within 200ms")
+    print("PASS: withdrawal from post-trigger peak restores within 200ms")
+    let disappearing = timed(naturalReach + (0..<20).map { _ in [] })
+    precondition(disappearing.count == 2 && disappearing[1].1 - Double(naturalReach.count) / 20 <= 0.45)
+    print("PASS: disappeared hand restores within 450ms")
+    let typing = (0..<600).map { i in
+        [anatomical(0.92 + sin(Double(i) * 0.5) * 0.04,
+                    x: 0.6 + sin(Double(i) * 0.25) * 0.015, y: 0.14,
+                    fingerFlex: sin(Double(i) * 0.8))]
+    }
+    precondition(timed(typing).isEmpty)
+    print("PASS: 30 seconds of low typing / finger flex / scale noise")
+    let waveWithScale = (0..<200).map { i in
+        [anatomical(1 + sin(Double(i) * 0.12) * 0.18,
+                    x: 0.65 + sin(Double(i) * 0.20) * 0.30)]
+    }
+    precondition(timed(waveWithScale).isEmpty)
+    print("PASS: lateral waving with incidental scale changes")
+    let diagonalReach = (0..<25).map { i in
+        [anatomical(0.42 + Double(i) * 0.03, x: 0.65 + Double(i) * 0.002)]
+    }
+    precondition(timed(diagonalReach).first?.0 == .show)
+    print("PASS: modest diagonal approach still triggers")
+    let liftingReach = (0..<25).map { i in
+        [anatomical(0.42 + Double(i) * 0.03, y: 0.16 + Double(i) * 0.014)]
+    }
+    precondition(timed(liftingReach).first?.0 == .show)
+    print("PASS: reaching upward from keyboard is not treated as lateral waving")
+    let veryShortLoss = naturalReach + (0..<3).map { _ in [] } + (0..<10).map { _ in [anatomical(1.02)] }
+    precondition(timed(veryShortLoss).map { $0.0 } == [.show])
+    print("PASS: 150ms keypoint loss does not flicker warning")
+    let partialLoss = naturalReach + (0..<5).map { _ in [anatomical(1.02, omit: Set(6...20))] } +
+        (0..<10).map { _ in [anatomical(1.02)] }
+    precondition(timed(partialLoss).map { $0.0 } == [.show])
+    print("PASS: partial keypoint loss must not look like withdrawal")
+    for fps in [10.0,20.0,30.0] {
+        let frames = (0..<Int(fps * 1.5)).map { i in [anatomical(0.42 + Double(i) / fps * 0.5)] }
+        precondition(timed(frames,fps:fps).first?.0 == .show)
+    }
+    print("PASS: approach at 10, 20 and 30 fps")
+
 }
