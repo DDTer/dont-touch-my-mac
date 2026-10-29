@@ -49,4 +49,4 @@ PASS: whole-scene color change cannot act as a foreground arm
 PASS: scattered changed pixels cannot maintain a warning
 PASS: pause and reset clear the retained foreground reference
 PASS: system language resolution, manual override, three complete catalogs, matching format placeholders
-构建完成：/Users/ddter/Dev/dont-touch-my-mac/build/Build/Products/Release/Don't Touch My Mac.app
+构建完成：build/Build/Products/Release/Don't Touch My Mac.app
