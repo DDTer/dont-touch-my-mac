@@ -3,6 +3,11 @@ import SwiftUI
 import AVFoundation
 import Combine
 
+enum PosterTheme: String, CaseIterable, Identifiable {
+    case classic, cyber, anime, terminal
+    var id: String { rawValue }
+}
+
 @MainActor
 final class GuardModel: ObservableObject {
     @Published private(set) var localizer = Localizer()
@@ -35,6 +40,11 @@ final class GuardModel: ObservableObject {
     }
     @Published var customImage: NSImage?
     @Published var customName: String?
+    @Published var posterTheme: PosterTheme = .classic {
+        didSet {
+            UserDefaults.standard.set(posterTheme.rawValue, forKey: "posterTheme")
+        }
+    }
     @Published var sound = false {
         didSet {
             if !sound { warningVoice?.stop() }
@@ -115,6 +125,9 @@ final class GuardModel: ObservableObject {
         }
         if UserDefaults.standard.object(forKey: "voiceVariant") != nil {
             voiceVariant = min(2, max(0, UserDefaults.standard.integer(forKey: "voiceVariant")))
+        }
+        if let savedTheme = UserDefaults.standard.string(forKey: "posterTheme"), let theme = PosterTheme(rawValue: savedTheme) {
+            posterTheme = theme
         }
         if UserDefaults.standard.object(forKey: "sensitivity") != nil {
             sensitivity = min(1, max(0, UserDefaults.standard.double(forKey: "sensitivity")))

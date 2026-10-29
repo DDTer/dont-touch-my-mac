@@ -29,14 +29,37 @@ struct MainScreen: View {
                         } else { Poster(model: model) }
                     }
                     .frame(height: 310).clipShape(RoundedRectangle(cornerRadius: 12))
-                    HStack {
-                        Label(model.t("image.caption"), systemImage: "arrow.up.left.and.arrow.down.right")
-                            .font(.system(size: 11)).foregroundStyle(muted)
+                    HStack(spacing: 5) {
+                        ForEach(PosterTheme.allCases) { theme in
+                            Button(action: {
+                                model.customImage = nil
+                                model.customName = nil
+                                model.posterTheme = theme
+                            }) {
+                                Text(model.t("theme." + theme.rawValue))
+                                    .font(.system(size: 10, weight: model.customImage == nil && model.posterTheme == theme ? .semibold : .regular))
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3.5)
+                                    .background(
+                                        model.customImage == nil && model.posterTheme == theme ? lime.opacity(0.18) : Color.white.opacity(0.04),
+                                        in: RoundedRectangle(cornerRadius: 5)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(model.customImage == nil && model.posterTheme == theme ? lime : Color.white.opacity(0.1), lineWidth: 1)
+                                    )
+                                    .foregroundStyle(model.customImage == nil && model.posterTheme == theme ? lime : Color.white.opacity(0.75))
+                            }
+                            .buttonStyle(.plain)
+                        }
                         Spacer()
-                        Button(model.t("image.change")) { model.chooseImage() }.buttonStyle(.plain).foregroundStyle(lime).font(.system(size: 11, weight: .medium))
+                        Button(model.t("image.change")) { model.chooseImage() }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(model.customImage != nil ? lime : Color.white.opacity(0.75))
+                            .font(.system(size: 10, weight: .medium))
                         if model.customImage != nil {
                             Button(model.t("image.reset")) { model.customImage = nil; model.customName = nil }
-                                .buttonStyle(.plain).foregroundStyle(muted).font(.system(size: 11))
+                                .buttonStyle(.plain).foregroundStyle(muted).font(.system(size: 10))
                         }
                     }
                     if let name = model.customName {

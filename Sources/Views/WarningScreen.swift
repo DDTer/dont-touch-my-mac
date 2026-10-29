@@ -10,7 +10,7 @@ struct WarningScreen: View {
                 Color.black
                 Image(nsImage: image).resizable().scaledToFit().padding(.bottom, 52)
             } else {
-                Poster(model: model)
+                Poster(model: model, isWarning: true)
             }
             HStack(spacing: 8) {
                 Circle().fill(lime).frame(width: 6, height: 6)
