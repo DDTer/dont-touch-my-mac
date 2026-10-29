@@ -78,3 +78,4 @@
 "motion.pose" = "手形变化，继续跟踪";
 "motion.approaching" = "正在靠近 · %@%%";
 "motion.confirmed" = "已确认靠近趋势";
+"motion.occludedHold" = "手掌暂时出镜，继续检查近景遮挡";

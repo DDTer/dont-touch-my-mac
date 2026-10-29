@@ -78,3 +78,4 @@
 "motion.pose" = "手の形が変化。追跡を続けています。";
 "motion.approaching" = "近づいています · %@%%";
 "motion.confirmed" = "近づく動きを確認";
+"motion.occludedHold" = "手が画面外へ。近くの遮りを確認中";

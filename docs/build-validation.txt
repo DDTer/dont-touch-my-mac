@@ -31,5 +31,22 @@ PASS: reaching upward from keyboard is not treated as lateral waving
 PASS: 150ms keypoint loss does not flicker warning
 PASS: partial keypoint loss must not look like withdrawal
 PASS: approach at 10, 20 and 30 fps
+PASS: typing, lateral waving and static hand at low/default/high sensitivity
+PASS: four stable joints across multiple fingers can confirm a high-sensitivity reach
+PASS: four joints on just one finger cannot confirm an approach
+PASS: sparse joint visibility plus small scale jitter does not trigger
+PASS: three seconds of forearm evidence retains warning without hand landmarks
+PASS: warning restores after forearm corridor clears
+PASS: arm or foreground evidence alone must never trigger
+PASS: ambiguous foreground cannot latch warning indefinitely
+PASS: recognized withdrawal overrides remaining foreground after long occlusion
+PASS: foreground without a confirmed reach cannot arm the monitor
+PASS: stationary forearm-sized foreground persists after hand landmarks vanish
+PASS: changed near object releases even when original background does not return
+PASS: cleared forearm corridor releases support
+PASS: global exposure change cannot act as a foreground arm
+PASS: whole-scene color change cannot act as a foreground arm
+PASS: scattered changed pixels cannot maintain a warning
+PASS: pause and reset clear the retained foreground reference
 PASS: system language resolution, manual override, three complete catalogs, matching format placeholders
 构建完成：/Users/ddter/Dev/dont-touch-my-mac/build/Build/Products/Release/Don't Touch My Mac.app

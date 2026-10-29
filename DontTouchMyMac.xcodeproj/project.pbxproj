@@ -12,6 +12,7 @@
 		1EDB4EC6208004BC0F6810B7 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8F3B4645EAEC1FDEEC849510 /* AppIcon.icns */; };
 		36AA1A95BC840702EDD10148 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E0D8CE9550BE7BAFCAE11008 /* AVFoundation.framework */; };
 		44D3D551288C64D6EE6DE656 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 456DA54A62AE4FD0BDAD6803 /* Localizable.strings */; };
+		70249670E12B183629890830 /* SceneOcclusion.swift in Sources */ = {isa = PBXBuildFile; fileRef = D357C89CEB5DF2E4049CA7FC /* SceneOcclusion.swift */; };
 		79327E4BB74776C71B60C8B6 /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E9BF28654CDA519BA82B04 /* Localization.swift */; };
 		86DC1E3345F046A93BFA8AF1 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F5EF05872D104B21757453DA /* SwiftUI.framework */; };
 		886349D645AF91962FBB7662 /* Voices in Resources */ = {isa = PBXBuildFile; fileRef = C0F1E55E9A85B965AF26FA81 /* Voices */; };
@@ -28,6 +29,7 @@
 		294AA7C31C952E84CE34C5C1 /* localization-validation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "localization-validation.json"; sourceTree = "<group>"; };
 		43263E1427EBA6864B753B71 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		47CFF7193E59A4BAC26435E0 /* build-validation.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "build-validation.txt"; sourceTree = "<group>"; };
+		481FC20118EBE80D5EFB4452 /* detection-v010-validation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "detection-v010-validation.json"; sourceTree = "<group>"; };
 		5175F973B7540A3318EA1963 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		5560B26B5D8BE6BB66F8D8E7 /* ja.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ja.jpg; sourceTree = "<group>"; };
 		6968A96DD15940813A1C24C6 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -46,6 +48,7 @@
 		C0F1E55E9A85B965AF26FA81 /* Voices */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Voices; path = Assets/Voices; sourceTree = SOURCE_ROOT; };
 		C946F5FD19CB58081F27906E /* CameraEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraEngine.swift; sourceTree = "<group>"; };
 		D32BF1707834D39012440B00 /* ReplayDetection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayDetection.swift; sourceTree = "<group>"; };
+		D357C89CEB5DF2E4049CA7FC /* SceneOcclusion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneOcclusion.swift; sourceTree = "<group>"; };
 		D70978800B51F57CC8F6159E /* detection-validation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "detection-validation.json"; sourceTree = "<group>"; };
 		D7E9BF28654CDA519BA82B04 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		D85D622B32B1C71EC0D1F2B3 /* DetectionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionGate.swift; sourceTree = "<group>"; };
@@ -53,6 +56,7 @@
 		E0D8CE9550BE7BAFCAE11008 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		E1D1ECDF7EAC8573C7B25E9E /* zh-Hans.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "zh-Hans.jpg"; sourceTree = "<group>"; };
 		EA0F8BF4241C578EEB258727 /* replay_detection.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = replay_detection.sh; sourceTree = "<group>"; };
+		EC33FDDBE87F3E8928E1F58E /* detection-v09-validation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "detection-v09-validation.json"; sourceTree = "<group>"; };
 		F457E163B190A477A5150AE0 /* ja-warning.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ja-warning.jpg"; sourceTree = "<group>"; };
 		F5EF05872D104B21757453DA /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -123,6 +127,8 @@
 			isa = PBXGroup;
 			children = (
 				47CFF7193E59A4BAC26435E0 /* build-validation.txt */,
+				EC33FDDBE87F3E8928E1F58E /* detection-v09-validation.json */,
+				481FC20118EBE80D5EFB4452 /* detection-v010-validation.json */,
 				D70978800B51F57CC8F6159E /* detection-validation.json */,
 				294AA7C31C952E84CE34C5C1 /* localization-validation.json */,
 				B8A13E8C910503F8FA6E5A34 /* voices.json */,
@@ -152,6 +158,7 @@
 			children = (
 				C946F5FD19CB58081F27906E /* CameraEngine.swift */,
 				D85D622B32B1C71EC0D1F2B3 /* DetectionGate.swift */,
+				D357C89CEB5DF2E4049CA7FC /* SceneOcclusion.swift */,
 			);
 			path = Detection;
 			sourceTree = "<group>";
@@ -265,6 +272,7 @@
 				0DC5877EB0D1AD9A640F298C /* CameraEngine.swift in Sources */,
 				CEF667FD8B6535993D724E68 /* DetectionGate.swift in Sources */,
 				79327E4BB74776C71B60C8B6 /* Localization.swift in Sources */,
+				70249670E12B183629890830 /* SceneOcclusion.swift in Sources */,
 				DEE97D962005DC6185E3E428 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

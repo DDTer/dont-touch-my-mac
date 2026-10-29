@@ -11,6 +11,7 @@ struct HandFrame {
     let timestamp: Double
     let epoch: Int
     var processingSeconds = 0.0
+    var scene: SceneSignature?
 }
 
 final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
@@ -116,10 +117,35 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 let side: Int = hand.chirality == .left ? 1 : hand.chirality == .right ? 2 : 0
                 hands.append(HandMeasurement(x: xs.reduce(0,+) / Double(xs.count), y: ys.reduce(0,+) / Double(ys.count), width: width, length: height, side: side, pose: pose))
             }
-            let frame = HandFrame(hands: hands, recognizedCount: request.results?.count ?? 0, reliablePointCount: reliablePointCount, timestamp: now, epoch: epoch, processingSeconds: ProcessInfo.processInfo.systemUptime - now)
+            let scene = buffer.flatMap { sceneSignature($0) }
+            let frame = HandFrame(hands: hands, recognizedCount: request.results?.count ?? 0, reliablePointCount: reliablePointCount, timestamp: now, epoch: epoch, processingSeconds: ProcessInfo.processInfo.systemUptime - now, scene: scene)
             DispatchQueue.main.async { [weak self] in self?.onFrame?(frame) }
         } catch {
             report(LocalizedMessage("error.handDetection", [error.localizedDescription]))
         }
     }
+    private func sceneSignature(_ buffer: CVPixelBuffer) -> SceneSignature? {
+        guard CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_32BGRA,
+              CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return nil }
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        guard let base=CVPixelBufferGetBaseAddress(buffer) else { return nil }
+        let width=CVPixelBufferGetWidth(buffer), height=CVPixelBufferGetHeight(buffer)
+        guard width > 0 && height > 0 else { return nil }
+        let stride=CVPixelBufferGetBytesPerRow(buffer), bytes=base.assumingMemoryBound(to:UInt8.self)
+        let columns=48, rows=36
+        var rgb=[UInt8](repeating:0,count:columns*rows*3)
+        for y in 0..<rows { for x in 0..<columns {
+            for c in 0..<3 {
+                var sum=0
+                for (dx,dy) in [(0.25,0.25),(0.75,0.25),(0.25,0.75),(0.75,0.75)] {
+                    let px=min(width-1,Int((Double(x)+dx)*Double(width)/Double(columns)))
+                    let py=min(height-1,Int((Double(y)+dy)*Double(height)/Double(rows)))
+                    sum += Int(bytes[py*stride+px*4+(2-c)])
+                }
+                rgb[(y*columns+x)*3+c]=UInt8(sum/4)
+            }
+        } }
+        return SceneSignature(columns:columns,rows:rows,aspect:Double(width)/Double(height),rgb:rgb)
+    }
+
 }

@@ -29,12 +29,13 @@ struct DetectionGate {
         var latest: Sample { history.last! }
     }
     var threshold = 0.184
-    var requiredGrowth = 1.2565
+    var requiredGrowth = 1.2345
     private(set) var visible = false
     private(set) var progress = 0.0
     private(set) var growth = 1.0
     private(set) var reason = "motion.waiting"
     private(set) var diagnostics: [String: Double] = [:]
+    var protectedHand: HandMeasurement? { visible ? ownerReference : nil }
     private var tracks: [Track] = []
     private var nextID = 0
     private var ownerID: Int?
@@ -45,6 +46,7 @@ struct DetectionGate {
     private var cooldownUntil = -Double.infinity
     private var previousTime = -Double.infinity
     private var retreatSince: Double?
+    private var occludedSince: Double?
     private var approachSince: [Int: Double] = [:]
     private static let palmEdges = [(0,1),(0,5),(0,9),(0,13),(0,17),(5,9),(9,13),(13,17),(5,17)]
     private static let fingerEdges = [1,5,9,13,17].flatMap { start in (start..<(start + 3)).map { ($0,$0 + 1) } }
@@ -68,19 +70,19 @@ struct DetectionGate {
 
     mutating func reset(now: Double, cooldown: Double = 0) {
         visible = false; progress = 0; growth = 1; tracks = []
-        retreatSince = nil; approachSince.removeAll()
+        retreatSince = nil; occludedSince = nil; approachSince.removeAll()
         ownerID = nil; ownerReference = nil; triggerScale = 0
         lastNear = -.infinity; shownAt = -.infinity; previousTime = -.infinity
         cooldownUntil = now + cooldown
         reason = cooldown > 0 ? "motion.cooldown" : "motion.waiting"
     }
 
-    mutating func ingest(hands: [HandMeasurement], now: Double) -> Event? {
+    mutating func ingest(hands: [HandMeasurement], now: Double, nearOcclusion: Bool = false) -> Event? {
         diagnostics = ["frameGap": now - previousTime]
         guard now.isFinite, now > previousTime else { return nil }
         if now - previousTime > 0.35 { tracks.removeAll() }
         previousTime = now
-        tracks.removeAll { now - $0.latest.time > (visible && $0.id == ownerID ? 0.65 : 0.30) }
+        tracks.removeAll { now - $0.latest.time > (visible && $0.id == ownerID ? (nearOcclusion ? Double.infinity : 0.65) : 0.30) }
         let valid = hands.filter {
             $0.x.isFinite && $0.y.isFinite && $0.width.isFinite && $0.length.isFinite &&
             $0.width > 0.015 && $0.length > 0.015 && $0.scale < 1.5 &&
@@ -117,6 +119,7 @@ struct DetectionGate {
         diagnostics["tracks"] = Double(tracks.count)
         diagnostics["history"] = Double(tracks.map { $0.history.count }.max() ?? 0)
         if visible {
+            var reliableOwner = false
             if let owner = tracks.first(where: { $0.id == ownerID && currentIDs.contains($0.id) }) {
                 let hand = owner.latest.hand
                 // Follow the closest *confirmed* pose after triggering. Comparing
@@ -126,6 +129,7 @@ struct DetectionGate {
                     ? ownerReference.flatMap { Self.boneScale(hand, relativeTo: $0) }
                     : hand.scale / max(triggerScale, 0.001)
                 if let relative {
+                    reliableOwner = true
                     diagnostics["relativePeakScale"] = relative
                     if relative > 1.04, owner.history.count >= 2 {
                         let previous = owner.history[owner.history.count - 2].hand
@@ -149,9 +153,17 @@ struct DetectionGate {
                 // occlusion while keeping disappearance recovery under 0.5s.
                 retreatSince = nil
             }
-            reason = "motion.holding"
+            // Foreground evidence is only allowed to retain an existing warning.
+            // A positively recognized withdrawal always wins over this evidence.
+            if reliableOwner { occludedSince = nil }
+            else if nearOcclusion && occludedSince == nil { occludedSince = now }
+            let occlusionExpired = occludedSince.map { now - $0 >= 3.5 } ?? false
+            if nearOcclusion && !occlusionExpired { lastNear = now }
+            diagnostics["occlusionSeconds"] = occludedSince.map { now - $0 } ?? 0
+            diagnostics["nearOcclusion"] = nearOcclusion ? 1 : 0
+            reason = nearOcclusion && !reliableOwner ? "motion.occludedHold" : "motion.holding"
             let withdrawn = retreatSince.map { now - $0 >= 0.10 } ?? false
-            if now - shownAt >= 0.28 && (withdrawn || now - lastNear >= 0.42) {
+            if now - shownAt >= 0.28 && (withdrawn || occlusionExpired || now - lastNear >= 0.42) {
                 reset(now: now, cooldown: 0.30)
                 return .hide
             }
@@ -182,6 +194,7 @@ struct DetectionGate {
             var lengths = h.map { $0.hand.length }
             var poseConsistent = true
             var usingBones = false
+            var partialPose = false
             var boneAgreement = 0.0
             var centers = h.map { HandPoint(x: $0.hand.x, y: $0.hand.y) }
             if h.contains(where: { !$0.hand.pose.isEmpty }) {
@@ -197,14 +210,17 @@ struct DetectionGate {
                                   y: centerJoints.map { sample.hand.pose[$0]!.y }.reduce(0,+) / Double(centerJoints.count))
                     }
                 }
-                guard common.count >= 5 else { reason = "motion.keypoints"; continue }
+                let groups = Set(common.filter { $0 > 0 }.map { ($0 - 1) / 4 })
+                partialPose = common.count == 4 && groups.count >= 2 &&
+                    common.contains(where: { [0,1,5,9,13,17].contains($0) })
+                guard common.count >= 5 || partialPose else { reason = "motion.keypoints"; continue }
                 let pairs = common.enumerated().flatMap { i, a in common.dropFirst(i + 1).map { (a, $0) } }
                     .filter { a, b in
                         let p = first.hand.pose[a]!, q = first.hand.pose[b]!
                         return hypot(p.x - q.x, p.y - q.y) >= 0.012
                     }
                 diagnostics["pointPairs"] = Double(pairs.count)
-                guard pairs.count >= 8 else { continue }
+                guard pairs.count >= (partialPose ? 6 : 8) else { continue }
                 let distances = h.map { sample in pairs.map { a, b in
                     let p = sample.hand.pose[a]!, q = sample.hand.pose[b]!
                     return hypot(p.x - q.x, p.y - q.y)
@@ -294,7 +310,7 @@ struct DetectionGate {
             }
             let r2 = covariance * covariance / max(varianceT * varianceS, 0.0000001)
             let rising = zip(scales, scales.dropFirst()).filter { $1 >= $0 * 0.96 }.count
-            let coherent = poseConsistent && covariance > 0 && r2 >= (usingBones ? 0.60 : 0.75) &&
+            let coherent = poseConsistent && covariance > 0 && r2 >= (partialPose ? 0.85 : (usingBones ? 0.60 : 0.75)) &&
                 Double(rising) / Double(h.count - 1) >= (usingBones ? 0.60 : 0.75) &&
                 (usingBones || (widthRatio >= 1.10 && lengthRatio >= 1.10 && shapeChange <= 1.55)) &&
                 depthDominant && lateralTravel <= 0.40
@@ -313,7 +329,7 @@ struct DetectionGate {
             if !poseConsistent && progress == 0 { reason = "motion.pose" }
             // With independent palm+finger evidence, require less expansion and
             // project at most 120ms ahead. Bounding-box-only input stays stricter.
-            let targetGrowth = usingBones ? max(1.14, requiredGrowth - 0.07) : requiredGrowth
+            let targetGrowth = usingBones ? max(1.12, requiredGrowth - 0.07) : requiredGrowth
             let slope = covariance / max(varianceT, 0.000001)
             let predictedNear = nearScale * exp(min(0.14, max(0, slope) * 0.12))
             let reachesNear = nearScale >= threshold || (usingBones && nearScale >= threshold * 0.87 && predictedNear >= threshold)
@@ -335,7 +351,9 @@ struct DetectionGate {
             }
             if coherent && stillGrowing && ratio >= targetGrowth && typingSafe &&
                 nearScale * (1 - 1 / ratio) >= max(0.018, threshold * (usingBones ? 0.14 : 0.20)) && reachesNear {
-                let confirmedInWindow = usingBones && r2 >= 0.80 && boneAgreement >= 0.80 &&
+                let strongGeometry = usingBones ? (r2 >= 0.80 && boneAgreement >= 0.80) :
+                    (r2 >= 0.92 && shapeChange <= 1.25 && widthRatio >= 1.10 && lengthRatio >= 1.10)
+                let confirmedInWindow = strongGeometry &&
                     scales.last! >= scales[scales.count - 2] * 1.02 &&
                     scales[scales.count - 2] >= scales[scales.count - 3] * 1.02
                 let confirmedAcrossFrames = approachSince[track.id].map { now - $0 >= 0.06 } ?? false
@@ -425,8 +443,9 @@ func runGateTests() {
         let xs = pose.values.map { $0.x }, ys = pose.values.map { $0.y }
         return HandMeasurement(x: x, y: y, width: xs.max()! - xs.min()!, length: ys.max()! - ys.min()!, side: 1, pose: pose)
     }
-    func timed(_ frames: [[HandMeasurement]], fps: Double = 20) -> [(DetectionGate.Event,Double)] {
+    func timed(_ frames: [[HandMeasurement]], fps: Double = 20, sensitivity: Double? = nil) -> [(DetectionGate.Event,Double)] {
         var gate = DetectionGate(), events: [(DetectionGate.Event,Double)] = []
+        if let sensitivity { gate.threshold = 0.25 - sensitivity * 0.12; gate.requiredGrowth = 1.35 - sensitivity * 0.21 }
         for (i,hands) in frames.enumerated() {
             let time = Double(i) / fps
             if let event = gate.ingest(hands: hands, now: time) { events.append((event,time)) }
@@ -481,5 +500,71 @@ func runGateTests() {
         precondition(timed(frames,fps:fps).first?.0 == .show)
     }
     print("PASS: approach at 10, 20 and 30 fps")
+    for sensitivity in [0.0,0.55,1.0] {
+        precondition(timed(typing,sensitivity:sensitivity).isEmpty)
+        precondition(timed(waveWithScale,sensitivity:sensitivity).isEmpty)
+        precondition(timed((0..<100).map { _ in [anatomical(1.8)] },sensitivity:sensitivity).isEmpty)
+    }
+    print("PASS: typing, lateral waving and static hand at low/default/high sensitivity")
+    // Every frame has six joints; four remain common while visibility changes.
+    func sparse(_ factor: Double, frame: Int, oneFinger: Bool = false) -> HandMeasurement {
+        let core: Set<Int> = oneFinger ? [5,6,7,8] : [0,5,9,13]
+        let extra: Set<Int> = frame % 2 == 0 ? [1,10] : [14,17]
+        let keep = core.union(extra)
+        return anatomical(factor, omit:Set(0...20).subtracting(keep))
+    }
+    let sparseReach = (0..<25).map { [sparse(0.70+Double($0)*0.035,frame:$0)] }
+    precondition(timed(sparseReach,sensitivity:1).first?.0 == .show)
+    print("PASS: four stable joints across multiple fingers can confirm a high-sensitivity reach")
+    let oneFinger = (0..<25).map { i -> [HandMeasurement] in
+        let factor = 0.70 + Double(i) * 0.035
+        let pose = Dictionary(uniqueKeysWithValues: (5...8).map { joint in
+            let d = Double(joint - 5) * 0.05 * factor
+            return (joint,HandPoint(x:0.60+d,y:0.45+d))
+        })
+        return [HandMeasurement(x:0.65,y:0.50,width:0.16*factor,length:0.16*factor,side:1,pose:pose)]
+    }
+    precondition(timed(oneFinger,sensitivity:1).isEmpty)
+    print("PASS: four joints on just one finger cannot confirm an approach")
+    let sparseJitter = (0..<200).map { [sparse(1+sin(Double($0)*0.4)*0.03,frame:$0)] }
+    precondition(timed(sparseJitter,sensitivity:1).isEmpty)
+    print("PASS: sparse joint visibility plus small scale jitter does not trigger")
+    var retained = DetectionGate(), heldEvents: [DetectionGate.Event] = []
+    for (i,hands) in naturalReach.enumerated() {
+        if let event=retained.ingest(hands:hands,now:Double(i)/20) { heldEvents.append(event) }
+    }
+    for i in 0..<60 {
+        if let event=retained.ingest(hands:[],now:1.25+Double(i)/20,nearOcclusion:true) { heldEvents.append(event) }
+    }
+    precondition(heldEvents == [.show] && retained.visible)
+    print("PASS: three seconds of forearm evidence retains warning without hand landmarks")
+    for i in 0..<12 {
+        if let event=retained.ingest(hands:[],now:4.25+Double(i)/20,nearOcclusion:false) { heldEvents.append(event) }
+    }
+    precondition(heldEvents == [.show,.hide])
+    print("PASS: warning restores after forearm corridor clears")
+    var emptyGate=DetectionGate()
+    for i in 0..<100 { precondition(emptyGate.ingest(hands:[],now:Double(i)/20,nearOcclusion:true) == nil) }
+    precondition(!emptyGate.visible)
+    print("PASS: arm or foreground evidence alone must never trigger")
+    var bounded = DetectionGate(), boundedEvents: [DetectionGate.Event] = []
+    for (i,hands) in naturalReach.enumerated() {
+        if let event=bounded.ingest(hands:hands,now:Double(i)/20) { boundedEvents.append(event) }
+    }
+    for i in 0..<100 {
+        if let event=bounded.ingest(hands:[],now:1.25+Double(i)/20,nearOcclusion:true) { boundedEvents.append(event) }
+    }
+    precondition(boundedEvents == [.show,.hide] && !bounded.visible)
+    print("PASS: ambiguous foreground cannot latch warning indefinitely")
+    var retract = DetectionGate(), retractEvents: [DetectionGate.Event] = []
+    for (i,hands) in naturalReach.enumerated() {
+        if let event=retract.ingest(hands:hands,now:Double(i)/20) { retractEvents.append(event) }
+    }
+    for i in 0..<30 { _=retract.ingest(hands:[],now:1.25+Double(i)/20,nearOcclusion:true) }
+    for i in 0..<10 {
+        if let event=retract.ingest(hands:[anatomical(0.65)],now:2.75+Double(i)/20,nearOcclusion:true) { retractEvents.append(event) }
+    }
+    precondition(retractEvents == [.show,.hide])
+    print("PASS: recognized withdrawal overrides remaining foreground after long occlusion")
 
 }

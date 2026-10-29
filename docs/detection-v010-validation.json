@@ -1,0 +1,266 @@
+{
+  "version": "0.10.2",
+  "date": "2026-10-29",
+  "problem": "Confirmed approaching hand can leave the field of view while a forearm remains; missing landmarks alone do not prove withdrawal.",
+  "implementation": "Confirmed-approach-gated local foreground retention, near-object removal comparison and a 3.5-second cap without a reliable owner hand; not arm semantics or physical contact sensing.",
+  "nativeReleaseBuild": "passed arm64 and x86_64, executed arm64 only",
+  "automatedDetectionAndOcclusionScenarios": 50,
+  "localizedCatalogKeys": 80,
+  "privacy": "48x36 RGB signatures exist only in memory; no signatures/video in diagnostics or repository.",
+  "previousLiveLandmarkReplay": {
+    "algorithm": "0.10",
+    "events": [
+      {
+        "event": "show",
+        "time": 32.247004916658625
+      },
+      {
+        "event": "hide",
+        "time": 33.70862958324142
+      },
+      {
+        "event": "show",
+        "time": 34.97929716669023
+      },
+      {
+        "event": "hide",
+        "time": 36.313290250021964
+      },
+      {
+        "event": "show",
+        "time": 39.94559587491676
+      },
+      {
+        "event": "hide",
+        "time": 41.21959237498231
+      },
+      {
+        "event": "show",
+        "time": 113.58680104161613
+      },
+      {
+        "event": "hide",
+        "time": 114.38625099998899
+      }
+    ],
+    "framesWithHands": 198,
+    "limitation": "Unlabeled landmark replay does not establish live recall, false-positive rate or camera latency.",
+    "samples": 1719,
+    "exactParityWithOriginal": true
+  },
+  "currentLiveAcceptance": {
+    "status": "passed final short trial by user",
+    "feedback": "触发和恢复都正常",
+    "requestedSequence": "Natural approach, about 2-second pause, withdrawal.",
+    "observedLogCycles": 2,
+    "limitation": "No independently labeled action times or long-term false-positive rate. One recovery used the 3.5-second uncertainty cap; another used near-object change."
+  },
+  "limitations": [
+    "Foreground support alone cannot trigger the warning.",
+    "Similar colors, low contrast, body movement into the corridor and unavailable pre-approach background can affect retention.",
+    "New image feature extraction cannot be revalidated from old landmark-only recordings.",
+    "Long-duration accuracy, physical touch sensing, Intel hardware and older macOS are not validated.",
+    "Hand absent longer than 3.5 seconds without reliable hand geometry can dismiss the warning even if a forearm remains; this is a deliberate anti-latch tradeoff."
+  ],
+  "limits": {
+    "ambiguousForegroundRetentionSeconds": 3.5,
+    "clearForegroundRecoverySeconds": 0.42,
+    "recognizedWithdrawalPriority": true,
+    "backgroundFeatures": "48x36 RGB, in memory only"
+  },
+  "earlierTrial": {
+    "version": "0.10.0",
+    "result": "failed user test: 收手后警告不消失或恢复慢",
+    "cause": "The changed body pose could remain different from the pre-approach background.",
+    "fix": "Compare with the near foreground appearance too, and bound unsupported occlusion retention."
+  },
+  "failedTrialSummaryReplay": {
+    "algorithm": "0.10",
+    "events": [
+      {
+        "event": "show",
+        "time": 42.68145295837894
+      },
+      {
+        "event": "hide",
+        "time": 48.01706779166125
+      },
+      {
+        "event": "show",
+        "time": 91.82010187511332
+      },
+      {
+        "event": "hide",
+        "time": 95.56765695824288
+      }
+    ],
+    "framesWithHands": 81,
+    "limitation": "Only landmarks and prior occlusion metrics replayed; proves bounded state behavior, not new image-based release accuracy.",
+    "samples": 1173
+  },
+  "sensitivityCorrection": {
+    "reason": "A coherent recorded candidate grew 17.6238%, just below the old 18% high-sensitivity threshold; other windows lost common joints.",
+    "highSensitivityBaseGrowthBefore": 1.18,
+    "highSensitivityBaseGrowthAfter": 1.14,
+    "minimumBoneGrowthAfter": 1.12,
+    "partialPose": "Four common joints require multiple fingers plus a palm/wrist anchor and R² >= 0.85.",
+    "confirmation": "Stable geometry can confirm across the existing multi-frame window instead of always waiting another camera frame.",
+    "negativeSweep": "Typing-style articulation, lateral waving and static hand pass at low/default/high sensitivity."
+  },
+  "sensitivityRecordedReplay": {
+    "frames": 2885,
+    "beforeEvents": [
+      {
+        "event": "show",
+        "time": 63.59395420830697
+      },
+      {
+        "event": "hide",
+        "time": 67.86784216668457
+      },
+      {
+        "event": "show",
+        "time": 69.20147354155779
+      },
+      {
+        "event": "hide",
+        "time": 70.53014191659167
+      },
+      {
+        "event": "show",
+        "time": 75.87248674989678
+      },
+      {
+        "event": "hide",
+        "time": 77.48048708331771
+      },
+      {
+        "event": "show",
+        "time": 105.21922566671856
+      },
+      {
+        "event": "hide",
+        "time": 109.8869807915762
+      },
+      {
+        "event": "show",
+        "time": 125.96500958316028
+      },
+      {
+        "event": "hide",
+        "time": 129.69573074998334
+      }
+    ],
+    "afterEvents": [
+      {
+        "event": "show",
+        "time": 63.59395420830697
+      },
+      {
+        "event": "hide",
+        "time": 67.86784216668457
+      },
+      {
+        "event": "show",
+        "time": 69.20147354155779
+      },
+      {
+        "event": "hide",
+        "time": 70.53014191659167
+      },
+      {
+        "event": "show",
+        "time": 75.87248674989678
+      },
+      {
+        "event": "hide",
+        "time": 77.48048708331771
+      },
+      {
+        "event": "show",
+        "time": 85.47116829152219
+      },
+      {
+        "event": "hide",
+        "time": 85.93948800000362
+      },
+      {
+        "event": "show",
+        "time": 90.27956824982539
+      },
+      {
+        "event": "hide",
+        "time": 90.74678637483157
+      },
+      {
+        "event": "show",
+        "time": 105.21922566671856
+      },
+      {
+        "event": "hide",
+        "time": 109.8869807915762
+      },
+      {
+        "event": "show",
+        "time": 125.96500958316028
+      },
+      {
+        "event": "hide",
+        "time": 129.69573074998334
+      }
+    ],
+    "additionalCandidateOnsets": [
+      85.471,
+      90.28
+    ],
+    "limitation": "Unlabeled recording. Two additional warnings are not proof of higher recall or a measured false-positive rate; new image features are not reconstructed."
+  },
+  "intermediateFeedback": {
+    "v0.10.0": "收手后警告不消失或恢复慢",
+    "v0.10.1": "侦测不够灵敏了"
+  },
+  "liveCamera": {
+    "frames": 1315,
+    "durationSeconds": 87.65,
+    "framesWithHands": 164,
+    "medianFrameIntervalMilliseconds": 66.71,
+    "processingMillisecondsMedian": 8.13,
+    "processingMillisecondsP95": 23.82,
+    "deliveryMillisecondsP95": 24.84,
+    "events": [
+      {
+        "event": "show",
+        "time": 79.35528054181486,
+        "occlusionSeconds": 0,
+        "objectReleased": 0
+      },
+      {
+        "event": "hide",
+        "time": 84.16092991665937,
+        "occlusionSeconds": 3.538408333202824,
+        "objectReleased": 0
+      },
+      {
+        "event": "show",
+        "time": 85.6253653333988,
+        "occlusionSeconds": 0,
+        "objectReleased": 0
+      },
+      {
+        "event": "hide",
+        "time": 87.09689641674049,
+        "occlusionSeconds": 1.405386749887839,
+        "objectReleased": 1
+      }
+    ],
+    "noHandSupportedFrames": 59,
+    "userFeedback": "触发和恢复都正常",
+    "scope": "User confirmed the final trial. Logs contain two show/hide cycles; exact physical action times were not separately labeled."
+  },
+  "finalState": {
+    "languageMode": "manual zh-Hans selected by user",
+    "camera": "paused by user",
+    "diagnostics": "disabled",
+    "voiceVariant": "A"
+  }
+}

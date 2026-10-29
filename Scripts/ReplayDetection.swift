@@ -32,15 +32,15 @@ struct ReplayDetection {
             }
             gate.threshold = metrics["threshold"] ?? 0.184
             let sensitivity = min(1,max(0,(0.25 - gate.threshold)/0.12))
-            gate.requiredGrowth = 1.35 - sensitivity * 0.17
-            if let event = gate.ingest(hands:hands,now:time) {
+            gate.requiredGrowth = 1.35 - sensitivity * 0.21
+            if let event = gate.ingest(hands:hands,now:time,nearOcclusion:metrics["occlusionPresent"] == 1) {
                 events.append(["time":time,"event":event == .show ? "show":"hide"])
             }
             samples += 1
             if !hands.isEmpty { usable += 1 }
         }
         guard samples > 0 else { fputs("No valid diagnostic frames.\n", stderr); exit(2) }
-        let report: [String:Any] = ["algorithm":"0.9", "samples":samples, "framesWithHands":usable, "events":events,
+        let report: [String:Any] = ["algorithm":"0.10", "samples":samples, "framesWithHands":usable, "events":events,
             "limitation":"Unlabeled landmark replay does not establish live recall, false-positive rate or camera latency."]
         let data = try JSONSerialization.data(withJSONObject:report,options:[.prettyPrinted,.sortedKeys])
         try data.write(to:output,options:.atomic)

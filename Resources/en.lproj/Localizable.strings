@@ -78,3 +78,4 @@
 "motion.pose" = "Hand shape changed. Still tracking.";
 "motion.approaching" = "Approaching · %@%%";
 "motion.confirmed" = "Approach confirmed";
+"motion.occludedHold" = "Hand out of view; checking nearby foreground";

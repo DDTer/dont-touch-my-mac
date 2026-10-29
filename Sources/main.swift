@@ -19,12 +19,18 @@ final class LiveDiagnostics: @unchecked Sendable {
         FileManager.default.createFile(atPath: url.path, contents: nil)
         file = try? FileHandle(forWritingTo: url)
     }
-    func record(frame: HandFrame, gate: DetectionGate, event: DetectionGate.Event?) {
+    func record(frame: HandFrame, gate: DetectionGate, event: DetectionGate.Event?, occlusion: OcclusionEvidence) {
         guard file != nil else { return }
         var metrics = gate.diagnostics.filter { $0.value.isFinite }
         metrics["elapsed"] = frame.timestamp - started
         metrics["visionMilliseconds"] = frame.processingSeconds * 1000
         metrics["deliveryMilliseconds"] = max(0, ProcessInfo.processInfo.systemUptime - frame.timestamp) * 1000
+        metrics["occlusionPresent"] = occlusion.present ? 1 : 0
+        metrics["occlusionArmed"] = occlusion.armed ? 1 : 0
+        metrics["occlusionFraction"] = occlusion.changedFraction
+        metrics["occlusionOutside"] = occlusion.outsideFraction
+        metrics["occlusionReleaseChange"] = occlusion.foregroundChange
+        metrics["occlusionReleased"] = occlusion.released ? 1 : 0
         metrics["recognized"] = Double(frame.recognizedCount)
         metrics["usable"] = Double(frame.hands.count)
         metrics["points"] = Double(frame.reliablePointCount)
@@ -75,7 +81,7 @@ final class GuardModel: ObservableObject {
     @Published var replaying = false
     private var replayTimer: Timer?
     @Published var sensitivity = 0.55 {
-        didSet { gate.threshold = threshold; gate.requiredGrowth = 1.35 - sensitivity * 0.17; UserDefaults.standard.set(sensitivity, forKey: "sensitivity") }
+        didSet { gate.threshold = threshold; gate.requiredGrowth = 1.35 - sensitivity * 0.21; UserDefaults.standard.set(sensitivity, forKey: "sensitivity") }
     }
     @Published var customImage: NSImage?
     @Published var customName: String?
@@ -104,6 +110,7 @@ final class GuardModel: ObservableObject {
     var isPreview = false
     var epoch = 0
     var gate = DetectionGate()
+    private var sceneOcclusion = SceneOcclusion()
     var onChange: (() -> Void)?
     var threshold: Double { 0.25 - sensitivity * 0.12 }
     var now: Double { ProcessInfo.processInfo.systemUptime }
@@ -129,7 +136,7 @@ final class GuardModel: ObservableObject {
             sensitivity = min(1, max(0, UserDefaults.standard.double(forKey: "sensitivity")))
         }
         gate.threshold = threshold
-        gate.requiredGrowth = 1.35 - sensitivity * 0.17
+        gate.requiredGrowth = 1.35 - sensitivity * 0.21
         camera.onFrame = { [weak self] frame in self?.receive(frame) }
         camera.onStage = { [weak self] message, id in
             guard let self, self.enabled, self.starting, self.epoch == id else { return }
@@ -161,7 +168,7 @@ final class GuardModel: ObservableObject {
         error = nil; enabled = true; starting = true; status = "status.preparing"
         epoch += 1
         let id = epoch
-        gate.reset(now: now)
+        sceneOcclusion.reset(); gate.reset(now: now)
         onChange?()
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized: startCamera(epoch: id)
@@ -192,21 +199,30 @@ final class GuardModel: ObservableObject {
         epoch += 1; enabled = false; starting = false; status = "status.paused"
         camera.stop(); watchdog?.invalidate(); watchdog = nil
         startupTimer?.invalidate(); startupTimer = nil
-        span = 0; handCount = 0; approachProgress = 0; motionStatus = "motion.waiting"; gate.reset(now: now)
+        span = 0; handCount = 0; approachProgress = 0; motionStatus = "motion.waiting"; sceneOcclusion.reset(); gate.reset(now: now)
         hideOverlay(); onChange?()
     }
     func fail(_ message: LocalizedMessage) { stop(); error = message }
-    func receive(_ frame: HandFrame) {
+    func receive(_ frame: HandFrame, recordedOcclusion: Bool? = nil) {
         guard enabled, frame.epoch == epoch, !starting else { return }
         lastFrameAt = now
         span = frame.span; handCount = frame.recognizedCount
         guard !isPreview else { return }
-        let event = gate.ingest(hands: frame.hands, now: frame.timestamp)
+        var occlusion = sceneOcclusion.observe(frame.scene, hands: frame.hands, now: frame.timestamp)
+        if replaying, let recordedOcclusion { occlusion.present = recordedOcclusion }
+        let event = gate.ingest(hands: frame.hands, now: frame.timestamp, nearOcclusion: occlusion.present)
+        if event == .show, let hand = gate.protectedHand {
+            sceneOcclusion.begin(hand: hand, now: frame.timestamp)
+        } else if event == .hide {
+            sceneOcclusion.end()
+        } else if let hand = gate.protectedHand {
+            sceneOcclusion.follow(hand: hand)
+        }
         motionStatus = gate.reason; approachProgress = gate.progress
         if frame.recognizedCount > 0 && frame.hands.isEmpty && !gate.visible {
             motionStatus = "camera.occluded"
         }
-        diagnostics.record(frame: frame, gate: gate, event: event)
+        diagnostics.record(frame: frame, gate: gate, event: event, occlusion: occlusion)
         if let event {
             if event == .show { triggers += 1; showOverlay(preview: false) }
             else { recoveries += 1; hideOverlay() }
@@ -217,7 +233,7 @@ final class GuardModel: ObservableObject {
         stop()
         do {
             let lines = try String(contentsOf: url, encoding: .utf8).split(separator: "\n")
-            var frames: [(Double,[HandMeasurement])] = []
+            var frames: [(Double,[HandMeasurement],Bool)] = []
             for line in lines {
                 guard let object = try JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
                       let metrics = object["metrics"] as? [String: Double], let time = metrics["elapsed"],
@@ -232,7 +248,7 @@ final class GuardModel: ObservableObject {
                     })
                     return HandMeasurement(x: x, y: y, width: width, length: length, side: side, pose: pose)
                 }
-                frames.append((time,hands))
+                frames.append((time,hands,metrics["occlusionPresent"] == 1))
             }
             guard let firstHand = frames.first(where: { !$0.1.isEmpty })?.0 else {
                 error = "error.replayEmpty"; return
@@ -242,15 +258,15 @@ final class GuardModel: ObservableObject {
             let started = now
             enabled = true; replaying = true; triggers = 0; recoveries = 0
             status = "status.replay"
-            gate.reset(now: started)
+            sceneOcclusion.reset(); gate.reset(now: started)
             var index = 0
             replayTimer = Timer.scheduledTimer(withTimeInterval: 0.025, repeats: true) { [weak self] timer in
                 MainActor.assumeIsolated {
                     guard let self, self.replaying else { timer.invalidate(); return }
                     let elapsed = self.now - started
                     while index < frames.count && frames[index].0 - origin <= elapsed {
-                        let (time,hands) = frames[index]
-                        self.receive(HandFrame(hands: hands, recognizedCount: hands.count, reliablePointCount: hands.map { $0.pose.count }.max() ?? 0, timestamp: started + time - origin, epoch: self.epoch))
+                        let (time,hands,occlusion) = frames[index]
+                        self.receive(HandFrame(hands: hands, recognizedCount: hands.count, reliablePointCount: hands.map { $0.pose.count }.max() ?? 0, timestamp: started + time - origin, epoch: self.epoch), recordedOcclusion: occlusion)
                         index += 1
                     }
                     if index == frames.count {
@@ -318,7 +334,7 @@ final class GuardModel: ObservableObject {
         }
         returnToApp = nil
     }
-    func dismissPreview() { hideOverlay(); gate.reset(now: now, cooldown: 2) }
+    func dismissPreview() { hideOverlay(); sceneOcclusion.reset(); gate.reset(now: now, cooldown: 2) }
     func dismissWarning() {
         warningVoice?.stop()
         if isPreview { dismissPreview() }
@@ -450,7 +466,7 @@ struct MainScreen: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 5) {
-                    Text("V" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.9.0")).font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundStyle(muted)
+                    Text("V" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.10.2")).font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundStyle(muted)
                     Picker(model.t("language.label"), selection: $model.languageMode) {
                         ForEach(LanguageMode.allCases) { mode in
                             Text(model.localizer.modeName(mode)).tag(mode)
@@ -652,7 +668,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) { model.stop() }
 }
 
-if CommandLine.arguments.contains("--self-test") { runGateTests(); runLocalizationTests(); exit(0) }
+if CommandLine.arguments.contains("--self-test") { runGateTests(); runSceneOcclusionTests(); runLocalizationTests(); exit(0) }
 MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()
