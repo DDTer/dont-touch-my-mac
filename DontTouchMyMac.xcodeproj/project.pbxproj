@@ -34,6 +34,7 @@
 
 /* Begin PBXFileReference section */
 		097474E6440F0D974E2D260B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		163924F49AA7B9807BFF30E3 /* package_dmg.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = package_dmg.sh; sourceTree = "<group>"; };
 		1AD5248FA46074B71F2AF9BA /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1FBD4D208DC3C47555B3A3A3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		294AA7C31C952E84CE34C5C1 /* localization-validation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "localization-validation.json"; sourceTree = "<group>"; };
@@ -110,6 +111,7 @@
 				A9201D59D6AC9955DAFB8D0D /* build.sh */,
 				96E77070EB84256C4ADCC031 /* generate_voices.py */,
 				780BB522F7896AC0C17C147A /* MakeIcon.swift */,
+				163924F49AA7B9807BFF30E3 /* package_dmg.sh */,
 				EA0F8BF4241C578EEB258727 /* replay_detection.sh */,
 				D32BF1707834D39012440B00 /* ReplayDetection.swift */,
 			);

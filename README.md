@@ -8,6 +8,8 @@
 - 右上角可手动切换语言，立即更新控制面板、菜单栏、警告和应用错误文案；选择会保存。切回“跟随系统”会恢复自动解析。
 - 配音随当前应用语言切换，三种语言各有 A/B/C 声线。日语 A 保留用户已选版本。声线、静音和灵敏度会保存。
 - 点“预览警告”体验全屏；点“开启护屏”并允许摄像头后进入检测；Esc 可暂停。
+- 支持全局快捷键 `⌥⌘G` 随时开启/暂停护屏，无需切回窗口。
+- 多显示器连接时，全屏警告将自动同步覆盖所有活跃屏幕，全方位防触碰。
 - 关掉窗口后仍可从菜单栏操作；锁屏/睡眠会暂停。支持自定义本地图片。
 - macOS 原生文件选择器、权限弹窗的系统按钮遵循系统语言；其应用说明已提供三语资源。
 
@@ -19,15 +21,23 @@
 ./Scripts/build.sh
 ```
 
-构建输出：`build/Build/Products/Release/Don't Touch My Mac.app`。工程不依赖第三方运行库。若安装 XcodeGen，构建会从 `project.yml` 重新生成工程；未安装时直接使用已提交的 `.xcodeproj`。
+构建输出：`build/Build/Products/Release/Don't Touch My Mac.app`。如需一键打包可分发的 DMG 安装镜像：
+
+```sh
+./Scripts/package_dmg.sh
+```
+
+工程不依赖第三方运行库。若安装 XcodeGen，构建会从 `project.yml` 重新生成工程；未安装时直接使用已提交的 `.xcodeproj`。
 
 构建脚本会运行已有检测回归，以及语言解析、手动覆盖、三语词条完整性和格式占位符检查。界面验收以实际原生截图为准。
 
 ## 工程结构
 
-- `Sources/main.swift`：应用状态、控制面板、全屏警告、菜单栏。
-- `Sources/Support/Localization.swift`：语言选择、系统语言解析、文案格式化。
-- `Sources/Detection/`：相机与检测状态机。
+- `Sources/App/`：应用生命周期与委托（`AppDelegate`、全局快捷键绑定）。
+- `Sources/Models/`：业务核心状态（`GuardModel`、多屏窗口调度、离线配音驱动）。
+- `Sources/Views/`：控制面板（`MainScreen`）、全屏海报与警告窗口（`WarningScreen`、`Poster`、`CameraPreview`）。
+- `Sources/Detection/`：相机流管理与多阶段靠近检测状态机（`CameraEngine`、`DetectionGate`、`SceneOcclusion`）。
+- `Sources/Support/`：多语言解析（`Localization`）、实时脱敏诊断（`LiveDiagnostics`）、全局热键管理（`HotKeyManager`）。
 - `Resources/*.lproj/`：三语应用文案和摄像头权限说明。
 - `Assets/Voices/`：各语言的离线可爱风配音；不在运行时请求外部服务。
 - `docs/detection-validation.json`：此前验证边界，未包含原始手部关键点或视频。
