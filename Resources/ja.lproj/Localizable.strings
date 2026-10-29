@@ -40,6 +40,9 @@
 "sensitivity.hint" = "手の拡大と形から、近づく動きを推定します。";
 "voice.enable" = "ボイス";
 "voice.language" = "ボイス言語";
+"voice.lang.zh" = "中";
+"voice.lang.ja" = "日";
+"voice.lang.en" = "英";
 "voice.label" = "声の種類";
 "voice.variant" = "キュート %@";
 "voice.auto" = "画面言語に連動";

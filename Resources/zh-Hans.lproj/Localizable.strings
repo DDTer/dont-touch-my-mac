@@ -40,6 +40,9 @@
 "sensitivity.hint" = "结合持续放大与手形一致性，判断靠近趋势。";
 "voice.enable" = "配音";
 "voice.language" = "配音语言";
+"voice.lang.zh" = "中";
+"voice.lang.ja" = "日";
+"voice.lang.en" = "英";
 "voice.label" = "声线";
 "voice.variant" = "可爱 %@";
 "voice.auto" = "跟随界面";

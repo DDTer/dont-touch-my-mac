@@ -84,31 +84,29 @@ struct MainScreen: View {
                                 .font(.system(size: 11))
                                 .tint(lime)
                             Spacer(minLength: 4)
-                            HStack(spacing: 8) {
-                                Picker("", selection: Binding(
-                                    get: { model.voiceLanguage },
-                                    set: { model.selectLanguage($0) }
-                                )) {
-                                    Text(model.t("voice.auto")).tag("auto")
-                                    Text(model.t("language.name.zh")).tag("zh")
-                                    Text(model.t("language.name.ja")).tag("ja")
-                                    Text(model.t("language.name.en")).tag("en")
-                                }
-                                .labelsHidden()
-                                .pickerStyle(.menu)
-                                .controlSize(.mini)
-                                .frame(width: 95)
-
-                                Button(action: { model.playWarningVoice(force: true) }) {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "speaker.wave.2")
-                                        Text(model.t("voice.audition"))
+                            HStack(spacing: 0) {
+                                ForEach(["zh", "ja", "en"], id: \.self) { lang in
+                                    Button(action: {
+                                        model.selectLanguage(lang)
+                                    }) {
+                                        Text(model.t("voice.lang." + lang))
+                                            .font(.system(size: 10, weight: model.effectiveVoiceLang == lang ? .semibold : .medium))
+                                            .frame(minWidth: 26)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 3.5)
+                                            .background(
+                                                model.effectiveVoiceLang == lang ? lime.opacity(0.18) : Color.white.opacity(0.04)
+                                            )
+                                            .foregroundStyle(model.effectiveVoiceLang == lang ? lime : Color.white.opacity(0.7))
                                     }
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(lime)
+                                    .buttonStyle(.plain)
+                                    if lang != "en" {
+                                        Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
+                                    }
                                 }
-                                .buttonStyle(.plain)
                             }
+                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.white.opacity(0.1), lineWidth: 1))
                             .opacity(model.sound ? 1.0 : 0.45)
                         }
 

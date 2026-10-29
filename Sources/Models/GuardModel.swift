@@ -54,6 +54,9 @@ final class GuardModel: ObservableObject {
             UserDefaults.standard.set(voiceVariant, forKey: "voiceVariant")
         }
     }
+    var effectiveVoiceLang: String {
+        voiceLanguage == "auto" ? localizer.language.voiceCode : voiceLanguage
+    }
     var voiceSelection: String {
         get { "\(voiceLanguage)-\(voiceVariant)" }
         set {

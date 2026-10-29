@@ -40,6 +40,9 @@
 "sensitivity.hint" = "Tracks hand growth and shape to estimate approach.";
 "voice.enable" = "Voice";
 "voice.language" = "Voice Language";
+"voice.lang.zh" = "ZH";
+"voice.lang.ja" = "JA";
+"voice.lang.en" = "EN";
 "voice.label" = "Voice style";
 "voice.variant" = "Cute %@";
 "voice.auto" = "Match Interface";
