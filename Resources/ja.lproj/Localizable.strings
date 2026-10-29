@@ -39,6 +39,7 @@
 "sensitivity.medium" = "標準";
 "sensitivity.hint" = "手の拡大と形から、近づく動きを推定します。";
 "voice.enable" = "ボイス";
+"voice.language" = "ボイス言語";
 "voice.label" = "声の種類";
 "voice.variant" = "キュート %@";
 "voice.auto" = "画面言語に連動";

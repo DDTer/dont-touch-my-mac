@@ -77,13 +77,32 @@ struct MainScreen: View {
                         Text(model.t("sensitivity.hint"))
                             .font(.system(size: 10)).foregroundStyle(muted).fixedSize(horizontal: false, vertical: true)
                     }
-                    VStack(alignment: .leading, spacing: 9) {
+                    VStack(spacing: 0) {
                         HStack {
-                            Toggle(model.t("voice.enable"), isOn: $model.sound)
-                                .toggleStyle(.checkbox)
-                                .font(.system(size: 11))
+                            HStack(spacing: 7) {
+                                Image(systemName: model.sound ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(model.sound ? lime : muted)
+                                Text(model.t("voice.enable"))
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            Spacer()
+                            Toggle("", isOn: $model.sound)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                                .controlSize(.mini)
                                 .tint(lime)
-                            Spacer(minLength: 4)
+                        }
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 8)
+
+                        Divider().overlay(Color.white.opacity(0.06))
+
+                        HStack {
+                            Text(model.t("voice.language"))
+                                .font(.system(size: 11))
+                                .foregroundStyle(muted)
+                            Spacer()
                             Picker("", selection: Binding(
                                 get: { model.voiceLanguage },
                                 set: { model.selectLanguage($0) }
@@ -96,35 +115,33 @@ struct MainScreen: View {
                             .labelsHidden()
                             .pickerStyle(.menu)
                             .controlSize(.mini)
-                            .frame(width: 98)
-                            Button(action: { model.playWarningVoice(force: true) }) {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "speaker.wave.2")
-                                    Text(model.t("voice.audition"))
-                                }
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(lime)
-                            }
-                            .buttonStyle(.plain)
+                            .frame(width: 105)
                         }
-                        HStack(spacing: 6) {
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .opacity(model.sound ? 1.0 : 0.45)
+
+                        Divider().overlay(Color.white.opacity(0.06))
+
+                        HStack {
                             Text(model.t("voice.label"))
                                 .font(.system(size: 11))
                                 .foregroundStyle(muted)
-                            Spacer(minLength: 4)
+                            Spacer()
                             HStack(spacing: 5) {
                                 ForEach(0..<3, id: \.self) { idx in
                                     Button(action: {
                                         model.selectAndAudition(variant: idx)
                                     }) {
-                                        HStack(spacing: 3) {
+                                        HStack(spacing: 4) {
                                             if model.voiceVariant == idx {
                                                 Image(systemName: "speaker.wave.2.fill")
                                                     .font(.system(size: 8))
                                             }
-                                            Text(model.t("voice.variant", ["A", "B", "C"][idx]))
-                                                .font(.system(size: 10, weight: model.voiceVariant == idx ? .semibold : .regular))
+                                            Text(["A", "B", "C"][idx])
+                                                .font(.system(size: 11, weight: model.voiceVariant == idx ? .semibold : .regular))
                                         }
+                                        .frame(minWidth: 28)
                                         .padding(.horizontal, 7)
                                         .padding(.vertical, 3.5)
                                         .background(
@@ -141,7 +158,12 @@ struct MainScreen: View {
                                 }
                             }
                         }
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .opacity(model.sound ? 1.0 : 0.45)
                     }
+                    .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.07), lineWidth: 1))
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack(spacing: 16) {

@@ -39,6 +39,7 @@
 "sensitivity.medium" = "Medium";
 "sensitivity.hint" = "Tracks hand growth and shape to estimate approach.";
 "voice.enable" = "Voice";
+"voice.language" = "Voice Language";
 "voice.label" = "Voice style";
 "voice.variant" = "Cute %@";
 "voice.auto" = "Match Interface";
