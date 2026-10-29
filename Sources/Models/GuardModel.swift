@@ -42,10 +42,26 @@ final class GuardModel: ObservableObject {
         }
     }
     private var warningVoice: NSSound?
+    @Published var voiceLanguage: String = "auto" {
+        didSet {
+            warningVoice?.stop(); warningVoice = nil
+            UserDefaults.standard.set(voiceLanguage, forKey: "voiceLanguage")
+        }
+    }
     @Published var voiceVariant = 0 {
         didSet {
             warningVoice?.stop(); warningVoice = nil
             UserDefaults.standard.set(voiceVariant, forKey: "voiceVariant")
+        }
+    }
+    var voiceSelection: String {
+        get { "\(voiceLanguage)-\(voiceVariant)" }
+        set {
+            let parts = newValue.split(separator: "-")
+            if parts.count == 2 {
+                voiceLanguage = String(parts[0])
+                voiceVariant = Int(parts[1]) ?? 0
+            }
         }
     }
     @Published var triggers = 0
@@ -80,6 +96,9 @@ final class GuardModel: ObservableObject {
         }
         if UserDefaults.standard.object(forKey: "soundEnabled") != nil {
             sound = UserDefaults.standard.bool(forKey: "soundEnabled")
+        }
+        if let savedVoiceLang = UserDefaults.standard.string(forKey: "voiceLanguage") {
+            voiceLanguage = savedVoiceLang
         }
         if UserDefaults.standard.object(forKey: "voiceVariant") != nil {
             voiceVariant = min(2, max(0, UserDefaults.standard.integer(forKey: "voiceVariant")))
@@ -253,7 +272,8 @@ final class GuardModel: ObservableObject {
 
     func playWarningVoice(force: Bool = false) {
         guard sound || force else { return }
-        let resource = localizer.language.voiceCode + "-" + ["a", "b", "c"][min(2, max(0, voiceVariant))]
+        let langCode = voiceLanguage == "auto" ? localizer.language.voiceCode : voiceLanguage
+        let resource = langCode + "-" + ["a", "b", "c"][min(2, max(0, voiceVariant))]
         if warningVoice == nil, let url = Bundle.main.url(forResource: resource, withExtension: "wav", subdirectory: "Voices") {
             warningVoice = NSSound(contentsOf: url, byReference: false)
         }

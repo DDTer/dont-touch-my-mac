@@ -41,6 +41,7 @@
 "voice.enable" = "Voice";
 "voice.label" = "Voice style";
 "voice.variant" = "Cute %@";
+"voice.auto" = "Match Interface";
 "voice.audition" = "Listen";
 "camera.off" = "Camera is off";
 "camera.replayOff" = "Recorded hand data · Camera off";

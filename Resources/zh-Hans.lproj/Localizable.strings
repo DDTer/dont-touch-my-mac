@@ -41,6 +41,7 @@
 "voice.enable" = "配音";
 "voice.label" = "声线";
 "voice.variant" = "可爱 %@";
+"voice.auto" = "跟随界面";
 "voice.audition" = "试听";
 "camera.off" = "摄像头未开启";
 "camera.replayOff" = "真实关键点回放 · 摄像头关闭";

@@ -41,6 +41,7 @@
 "voice.enable" = "ボイス";
 "voice.label" = "声の種類";
 "voice.variant" = "キュート %@";
+"voice.auto" = "画面言語に連動";
 "voice.audition" = "試聴";
 "camera.off" = "カメラは OFF";
 "camera.replayOff" = "記録した手を再生 · カメラ OFF";

@@ -80,11 +80,28 @@ struct MainScreen: View {
                     HStack {
                         Toggle(model.t("voice.enable"), isOn: $model.sound).toggleStyle(.checkbox).font(.system(size: 11)).tint(lime)
                         Spacer(minLength: 4)
-                        Picker(model.t("voice.label"), selection: $model.voiceVariant) {
-                            Text(model.t("voice.variant", "A")).tag(0)
-                            Text(model.t("voice.variant", "B")).tag(1)
-                            Text(model.t("voice.variant", "C")).tag(2)
-                        }.labelsHidden().pickerStyle(.menu).controlSize(.mini).frame(width: 88)
+                        Picker(model.t("voice.label"), selection: $model.voiceSelection) {
+                            Section(model.t("voice.auto")) {
+                                Text(model.t("voice.auto") + " A").tag("auto-0")
+                                Text(model.t("voice.auto") + " B").tag("auto-1")
+                                Text(model.t("voice.auto") + " C").tag("auto-2")
+                            }
+                            Section(model.t("language.name.ja")) {
+                                Text(model.t("language.name.ja") + " A").tag("ja-0")
+                                Text(model.t("language.name.ja") + " B").tag("ja-1")
+                                Text(model.t("language.name.ja") + " C").tag("ja-2")
+                            }
+                            Section(model.t("language.name.zh")) {
+                                Text(model.t("language.name.zh") + " A").tag("zh-0")
+                                Text(model.t("language.name.zh") + " B").tag("zh-1")
+                                Text(model.t("language.name.zh") + " C").tag("zh-2")
+                            }
+                            Section(model.t("language.name.en")) {
+                                Text(model.t("language.name.en") + " A").tag("en-0")
+                                Text(model.t("language.name.en") + " B").tag("en-1")
+                                Text(model.t("language.name.en") + " C").tag("en-2")
+                            }
+                        }.labelsHidden().pickerStyle(.menu).controlSize(.mini).frame(width: 110)
                         Button(model.t("voice.audition")) { model.playWarningVoice(force: true) }
                             .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(lime)
                     }
