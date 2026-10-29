@@ -1,0 +1,25 @@
+PASS: no hand / 60 seconds
+PASS: large stationary hand must not trigger
+PASS: lateral waving must not trigger
+PASS: small scale jitter must not trigger
+PASS: palm rotation / width only must not trigger
+PASS: approach then hold gives one warning
+PASS: approach then withdraw recovers
+PASS: retreat while still visible recovers
+PASS: hand moving away must not trigger
+PASS: one-frame jump must not trigger
+PASS: different hands cannot form approach
+PASS: two static hands, order swaps
+PASS: brief occlusion does not dismiss warning
+PASS: keypoint geometry approach and withdrawal
+PASS: keypoint geometry static close fist
+PASS: keypoint geometry lateral wave
+PASS: finger spreading without approach
+PASS: changing visibility must not fake growth
+PASS: pose approach with missing palm points
+PASS: handedness classifier flicker must preserve track
+PASS: retreat then fast reach must not be diluted
+PASS: frame gaps cannot accumulate approach
+PASS: reset / cooldown
+PASS: system language resolution, manual override, three complete catalogs, matching format placeholders
+构建完成：/Users/ddter/Dev/dont-touch-my-mac/build/Build/Products/Release/Don't Touch My Mac.app

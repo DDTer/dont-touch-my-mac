@@ -1,0 +1,56 @@
+{
+  "version": "0.8.0",
+  "date": "2026-10-29",
+  "project": "dont-touch-my-mac",
+  "build": {
+    "nativeXcodeRelease": "passed in ~/Dev/dont-touch-my-mac",
+    "architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "executedArchitecture": "arm64",
+    "minimumMacOS": "14.0",
+    "adHocSignature": "verified"
+  },
+  "checks": {
+    "existingDetectionRegressions": 23,
+    "languageResolutionAndManualOverride": "passed",
+    "catalogKeysPerLanguage": 79,
+    "catalogLanguages": [
+      "en",
+      "ja",
+      "zh-Hans"
+    ],
+    "placeholderParity": "passed",
+    "localizedCameraPermissionResources": 3,
+    "bundledWaveAudioFiles": 9
+  },
+  "ui": {
+    "systemLanguageChinese": "observed and restored as final selection",
+    "manualEnglish": "observed and screenshot checked",
+    "manualJapanese": "observed and screenshot checked",
+    "manualLanguagePersistsAcrossRestart": "Japanese observed after restart",
+    "applicationMenuTranslations": "English and Japanese observed",
+    "japaneseFullScreenPreview": "observed with screenshot, automatically restored",
+    "englishFullScreenPreview": "confirmed working by user after automated clicks did not activate it",
+    "longEnglishJapaneseCopy": "wrapping fixed and screenshots checked",
+    "chineseFullScreenPreview": "not independently verified in this pass"
+  },
+  "voice": {
+    "switchesWithApplicationLanguage": true,
+    "japaneseA": "preserved from user-selected v0.7 asset",
+    "EnglishChinese": "new original anime-style generated recordings; no native-speaker listening review"
+  },
+  "limitations": [
+    "OS global language was not changed during validation; automatic parsing was checked with locale cases and the current Chinese system.",
+    "Native system dialog buttons follow macOS language.",
+    "No new independent live hand-detection accuracy or long-duration false-positive trial.",
+    "Intel and older macOS were compiled/targeted but not physically run."
+  ],
+  "finalState": {
+    "languageMode": "system",
+    "resolvedLanguage": "zh-Hans",
+    "camera": "paused",
+    "voiceVariant": "A"
+  }
+}

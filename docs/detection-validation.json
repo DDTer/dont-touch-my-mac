@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-29",
+  "currentVersion": "0.7.0",
+  "camera": {
+    "permission": "allowed by user",
+    "stream": "verified live",
+    "medianObservedFrameIntervalSeconds": 0.1
+  },
+  "v01": {
+    "userFeedback": "false positives",
+    "observedTriggerCount": 9,
+    "falsePositiveRate": null
+  },
+  "v03": {
+    "diagnosticLiveTriggerCount": 2,
+    "diagnosticLiveAutomaticRecoveryCount": 2,
+    "userFeedback": "too late or frequently missed"
+  },
+  "v04": {
+    "fullRecordedFrames": 2175,
+    "observedLiveTriggers": 8,
+    "observedLiveAutomaticRecoveries": 8,
+    "replayMatchesLiveCounts": true,
+    "userFeedback": "still too late or missed"
+  },
+  "v05": {
+    "syntheticRegressionsPassed": 23,
+    "missedSegmentReplay": {
+      "frames": 1562,
+      "v04Triggers": 0,
+      "v05Triggers": 2,
+      "v05AutomaticRecoveries": 2
+    },
+    "fullReplay": {
+      "frames": 2175,
+      "v04Triggers": 8,
+      "v04Recoveries": 8,
+      "v05Triggers": 10,
+      "v05Recoveries": 10
+    },
+    "nativeAppReplay": {
+      "source": "same real camera hand landmarks, original timing",
+      "actualFullscreenWarningObserved": true,
+      "triggers": 2,
+      "automaticRecoveries": 2,
+      "screenshot": "v05-replay-result.png",
+      "cameraUsedDuringReplay": false
+    },
+    "baselineNoRecognizedHandSeconds": 118.26,
+    "falsePositiveRate": null,
+    "freshLiveGestureTrialPassed": false,
+    "limitations": [
+      "Recorded data has no exact per-action ground-truth labels.",
+      "Extra triggers do not establish accuracy or prove all three requested gestures were caught.",
+      "New strategy was tuned and tested on this same limited recording; independent live trials remain necessary."
+    ]
+  },
+  "privacy": {
+    "videoFramesSaved": false,
+    "rawHandLandmarks": "retained only in local work directory, excluded from deliverable archive",
+    "diagnosticMarkersInPackage": false
+  },
+  "currentState": "v0.7 app open; camera paused; variant A selected; user mute preserved",
+  "detectionAlgorithmVersion": "0.5.0",
+  "voice": {
+    "text": "だぁ〜めぇ〜……だめっ！",
+    "language": "ja-JP",
+    "generator": "Fish Audio voice-design-1",
+    "durationSeconds": 1.3,
+    "selectedVariant": "A",
+    "selectedByUser": true,
+    "otherVariants": [
+      "B",
+      "C"
+    ],
+    "currentlyMuted": true,
+    "settingsPersisted": [
+      "voiceVariant",
+      "soundEnabled"
+    ],
+    "playbackViaNativePreviewButton": "A requested successfully; no load/playback error surfaced",
+    "bundledOfflineAudio": true
+  }
+}

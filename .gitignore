@@ -1,0 +1,17 @@
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.env
+.env.*
+*.key
+*.p12
+*.mobileprovision
+camera-diagnostics.enabled
+camera-replay-test.enabled
+live-diagnostics.jsonl
+*.xcresult
+
+# These are required offline application resources.
+!Assets/Voices/*.wav
