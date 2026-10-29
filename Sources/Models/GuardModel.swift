@@ -63,7 +63,6 @@ final class GuardModel: ObservableObject {
     var gate = DetectionGate()
     private var sceneOcclusion = SceneOcclusion()
     private var directOcclusionCount = 0
-    private var directOcclusionActive = false
     var onChange: (() -> Void)?
     var threshold: Double { 0.25 - sensitivity * 0.12 }
     var now: Double { ProcessInfo.processInfo.systemUptime }
@@ -157,7 +156,7 @@ final class GuardModel: ObservableObject {
         camera.stop(); watchdog?.invalidate(); watchdog = nil
         startupTimer?.invalidate(); startupTimer = nil
         span = 0; handCount = 0; approachProgress = 0; motionStatus = "motion.waiting"
-        directOcclusionCount = 0; directOcclusionActive = false
+        directOcclusionCount = 0
         sceneOcclusion.reset(); gate.reset(now: now)
         hideOverlay(); onChange?()
     }
@@ -171,7 +170,17 @@ final class GuardModel: ObservableObject {
         guard !isPreview else { return }
         var occlusion = sceneOcclusion.observe(frame.scene, hands: frame.hands, now: frame.timestamp)
         if replaying, let recordedOcclusion { occlusion.present = recordedOcclusion }
-        let event = gate.ingest(hands: frame.hands, now: frame.timestamp, nearOcclusion: occlusion.present)
+        var event = gate.ingest(hands: frame.hands, now: frame.timestamp, nearOcclusion: occlusion.present)
+        if frame.recognizedCount > 0 && frame.hands.isEmpty && !gate.visible {
+            directOcclusionCount += 1
+            if directOcclusionCount >= 2 { // ~90ms of hand directly covering the camera lens
+                event = gate.triggerDirect(now: frame.timestamp)
+            } else {
+                motionStatus = "camera.occluded"
+            }
+        } else if frame.recognizedCount == 0 || !frame.hands.isEmpty {
+            directOcclusionCount = 0
+        }
         if event == .show, let hand = gate.protectedHand {
             sceneOcclusion.begin(hand: hand, now: frame.timestamp)
         } else if event == .hide {
@@ -180,36 +189,6 @@ final class GuardModel: ObservableObject {
             sceneOcclusion.follow(hand: hand)
         }
         motionStatus = gate.reason; approachProgress = gate.progress
-        if frame.recognizedCount > 0 && frame.hands.isEmpty {
-            if !gate.visible && !directOcclusionActive {
-                directOcclusionCount += 1
-                if directOcclusionCount >= 2 { // ~90ms: hand/finger directly covering the camera lens
-                    directOcclusionActive = true
-                    triggers += 1
-                    showOverlay(preview: false)
-                    motionStatus = "motion.confirmed"
-                    approachProgress = 1.0
-                } else {
-                    motionStatus = "camera.occluded"
-                }
-            } else if directOcclusionActive {
-                motionStatus = "motion.holding"
-                approachProgress = 1.0
-            }
-        } else {
-            if directOcclusionActive {
-                if frame.recognizedCount == 0 {
-                    directOcclusionActive = false
-                    directOcclusionCount = 0
-                    recoveries += 1
-                    hideOverlay()
-                    motionStatus = "motion.waiting"
-                    approachProgress = 0
-                }
-            } else {
-                directOcclusionCount = 0
-            }
-        }
         diagnostics.record(frame: frame, gate: gate, event: event, occlusion: occlusion)
         if let event {
             if event == .show { triggers += 1; showOverlay(preview: false) }
@@ -328,7 +307,6 @@ final class GuardModel: ObservableObject {
         }
         overlays.removeAll()
         isPreview = false
-        directOcclusionActive = false
         directOcclusionCount = 0
         if hadOverlay, let previous = returnToApp, !previous.isTerminated {
             previous.activate(options: [])

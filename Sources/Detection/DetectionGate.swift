@@ -77,6 +77,19 @@ struct DetectionGate {
         reason = cooldown > 0 ? "motion.cooldown" : "motion.waiting"
     }
 
+    @discardableResult
+    mutating func triggerDirect(now: Double, hand: HandMeasurement? = nil) -> Event? {
+        guard !visible, now >= cooldownUntil else { return nil }
+        visible = true
+        shownAt = now
+        lastNear = now
+        triggerScale = hand?.scale ?? 0.35
+        ownerReference = hand
+        progress = 1
+        reason = "motion.confirmed"
+        return .show
+    }
+
     mutating func ingest(hands: [HandMeasurement], now: Double, nearOcclusion: Bool = false) -> Event? {
         diagnostics = ["frameGap": now - previousTime]
         guard now.isFinite, now > previousTime else { return nil }
@@ -148,6 +161,14 @@ struct DetectionGate {
                     // A changed keypoint set must not masquerade as shrinkage.
                     retreatSince = nil
                 }
+            } else if ownerID == nil, let closest = valid.max(by: { $0.scale < $1.scale }) {
+                reliableOwner = true
+                let relative = closest.scale / max(triggerScale, 0.001)
+                diagnostics["relativePeakScale"] = relative
+                lastNear = now
+                if relative <= 0.86 {
+                    if retreatSince == nil { retreatSince = now }
+                } else { retreatSince = nil }
             } else {
                 // A missing frame is not evidence of retreat; tolerate brief
                 // occlusion while keeping disappearance recovery under 0.5s.
