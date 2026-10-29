@@ -28,6 +28,7 @@ PASS: 30 seconds of low typing / finger flex / scale noise
 PASS: lateral waving with incidental scale changes
 PASS: modest diagonal approach still triggers
 PASS: reaching upward from keyboard is not treated as lateral waving
+PASS: pointing finger reach with curled fingers triggers warning
 PASS: 150ms keypoint loss does not flicker warning
 PASS: partial keypoint loss must not look like withdrawal
 PASS: approach at 10, 20 and 30 fps
