@@ -64,6 +64,16 @@ final class GuardModel: ObservableObject {
             }
         }
     }
+
+    func selectAndAudition(variant: Int) {
+        voiceVariant = min(2, max(0, variant))
+        playWarningVoice(force: true)
+    }
+
+    func selectLanguage(_ lang: String) {
+        voiceLanguage = lang
+        playWarningVoice(force: true)
+    }
     @Published var triggers = 0
     let camera = CameraEngine()
     let diagnostics = LiveDiagnostics()

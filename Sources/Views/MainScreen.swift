@@ -77,33 +77,70 @@ struct MainScreen: View {
                         Text(model.t("sensitivity.hint"))
                             .font(.system(size: 10)).foregroundStyle(muted).fixedSize(horizontal: false, vertical: true)
                     }
-                    HStack {
-                        Toggle(model.t("voice.enable"), isOn: $model.sound).toggleStyle(.checkbox).font(.system(size: 11)).tint(lime)
-                        Spacer(minLength: 4)
-                        Picker(model.t("voice.label"), selection: $model.voiceSelection) {
-                            Section(model.t("voice.auto")) {
-                                Text(model.t("voice.auto") + " A").tag("auto-0")
-                                Text(model.t("voice.auto") + " B").tag("auto-1")
-                                Text(model.t("voice.auto") + " C").tag("auto-2")
+                    VStack(alignment: .leading, spacing: 9) {
+                        HStack {
+                            Toggle(model.t("voice.enable"), isOn: $model.sound)
+                                .toggleStyle(.checkbox)
+                                .font(.system(size: 11))
+                                .tint(lime)
+                            Spacer(minLength: 4)
+                            Picker("", selection: Binding(
+                                get: { model.voiceLanguage },
+                                set: { model.selectLanguage($0) }
+                            )) {
+                                Text(model.t("voice.auto")).tag("auto")
+                                Text(model.t("language.name.zh")).tag("zh")
+                                Text(model.t("language.name.ja")).tag("ja")
+                                Text(model.t("language.name.en")).tag("en")
                             }
-                            Section(model.t("language.name.ja")) {
-                                Text(model.t("language.name.ja") + " A").tag("ja-0")
-                                Text(model.t("language.name.ja") + " B").tag("ja-1")
-                                Text(model.t("language.name.ja") + " C").tag("ja-2")
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .controlSize(.mini)
+                            .frame(width: 98)
+                            Button(action: { model.playWarningVoice(force: true) }) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "speaker.wave.2")
+                                    Text(model.t("voice.audition"))
+                                }
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(lime)
                             }
-                            Section(model.t("language.name.zh")) {
-                                Text(model.t("language.name.zh") + " A").tag("zh-0")
-                                Text(model.t("language.name.zh") + " B").tag("zh-1")
-                                Text(model.t("language.name.zh") + " C").tag("zh-2")
+                            .buttonStyle(.plain)
+                        }
+                        HStack(spacing: 6) {
+                            Text(model.t("voice.label"))
+                                .font(.system(size: 11))
+                                .foregroundStyle(muted)
+                            Spacer(minLength: 4)
+                            HStack(spacing: 5) {
+                                ForEach(0..<3, id: \.self) { idx in
+                                    Button(action: {
+                                        model.selectAndAudition(variant: idx)
+                                    }) {
+                                        HStack(spacing: 3) {
+                                            if model.voiceVariant == idx {
+                                                Image(systemName: "speaker.wave.2.fill")
+                                                    .font(.system(size: 8))
+                                            }
+                                            Text(model.t("voice.variant", ["A", "B", "C"][idx]))
+                                                .font(.system(size: 10, weight: model.voiceVariant == idx ? .semibold : .regular))
+                                        }
+                                        .padding(.horizontal, 7)
+                                        .padding(.vertical, 3.5)
+                                        .background(
+                                            model.voiceVariant == idx ? lime.opacity(0.18) : Color.white.opacity(0.04),
+                                            in: RoundedRectangle(cornerRadius: 5)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 5)
+                                                .stroke(model.voiceVariant == idx ? lime : Color.white.opacity(0.09), lineWidth: 1)
+                                        )
+                                        .foregroundStyle(model.voiceVariant == idx ? lime : Color.white.opacity(0.82))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
-                            Section(model.t("language.name.en")) {
-                                Text(model.t("language.name.en") + " A").tag("en-0")
-                                Text(model.t("language.name.en") + " B").tag("en-1")
-                                Text(model.t("language.name.en") + " C").tag("en-2")
-                            }
-                        }.labelsHidden().pickerStyle(.menu).controlSize(.mini).frame(width: 110)
-                        Button(model.t("voice.audition")) { model.playWarningVoice(force: true) }
-                            .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(lime)
+                        }
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
