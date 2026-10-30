@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-14.0%2B-blue?logo=apple" alt="macOS 14.0+">
   <img src="https://img.shields.io/badge/Swift-5.0-orange?logo=swift" alt="Swift 5.0">
-  <img src="https://img.shields.io/github/v/release/DDTer/dont-touch-my-mac?color=green" alt="Release">
+  <a href="https://github.com/DDTer/dont-touch-my-mac/releases"><img src="https://img.shields.io/github/v/release/DDTer/dont-touch-my-mac?label=Release&color=2ea44f" alt="Release"></a>
   <img src="https://img.shields.io/badge/Privacy-100%25%20On--Device-success" alt="Privacy">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License">
   <img src="https://img.shields.io/badge/Dependencies-Zero-brightgreen" alt="Zero Dependencies">
