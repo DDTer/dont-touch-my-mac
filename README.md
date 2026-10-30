@@ -1,6 +1,10 @@
 # Don’t Touch My Mac!
 
 <p align="center">
+  <b>简体中文</b> | <a href="README_en.md">English</a> | <a href="README_ja.md">日本語</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/macOS-14.0%2B-blue?logo=apple" alt="macOS 14.0+">
   <img src="https://img.shields.io/badge/Swift-5.0-orange?logo=swift" alt="Swift 5.0">
   <img src="https://img.shields.io/github/v/release/DDTer/dont-touch-my-mac?color=green" alt="Release">
